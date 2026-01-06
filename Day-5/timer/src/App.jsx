@@ -2,7 +2,7 @@ import Timer from "./Timer";
 
 function App() {
   return (
-    <div className="container" >
+    <div className="app" >
       <Timer />
     </div>
   );
