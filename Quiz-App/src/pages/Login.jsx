@@ -6,7 +6,7 @@ export const Login = ({setPage}) => {
     password : ""
   })
   const email = "ak@gmail.com";
-  const password = "12345678";
+  const password = "1234";
 
   const onSubmitHandler = (e)=>{
     e.preventDefault();

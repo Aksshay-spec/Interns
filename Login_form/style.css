@@ -9,14 +9,9 @@ body {
   min-width: 100%;
   display: flex;
   justify-content: space-between;
-  /* align-items: center; */
-  /* background-color: #3c3939; */
-}
-/* main{
  
-  display: flex;
-  justify-content: space-between;
-} */
+}
+
 .aside-image{
   width: 50vw;
   display: flex;
@@ -44,11 +39,10 @@ h2{
 }
 
 form {
-  /* max-width: 400px; */
-  /* width: 100%; */
+
   background: white;
   padding: 2rem;
-  /* border:2px solid blue; */
+
   border-radius: 15px;
   box-shadow: 5px 10px 14px #24a6f1;
 }
