@@ -1,13 +1,41 @@
-* {
+@import "tailwindcss";
+ @theme{
+  --color-bluish-200: #c7d2fe;  /* very light bluish */
+  --color-bluish-300: #94a3b8;  /* soft blue-gray */
+  --color-bluish-400: #64748b;  /* muted bluish */
+  --color-bluish-500: #0f172a;
+  --color-bluish-600: #0b1220;  /* darker */
+  --color-bluish-700: #080d18;  /* very dark */
+  --color-bluish-800: #05080f;  /* near-black */
+  --color-formcolor: #020617
+
+}
+@layer components {
+  .btn {
+    @apply w-full p-[12px] bg-indigo-500 text-white rounded-md
+           text-[15px] font-medium cursor-pointer mt-[10px]
+           transition;
+    
+  }
+  .btn:hover {
+    @apply bg-indigo-600 transition-colors duration-200;
+  }
+  .input{
+    @apply py-2.5 px-3 rounded-md border border-slate-800 bg-slate-950 text-gray-200 text-sm outline-none  placeholder:text-gray-500 focus:border-indigo-500 
+  }
+} 
+
+/* * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
   font-family: "Segoe UI", sans-serif;
-}
+} 
 
-body {
-  margin: 0;
-}
 
-.main-con {
+
+
+ .main-con {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -75,22 +103,7 @@ body {
 
 .btn:hover {
   background: #4f46e5;
-}
+} */
 
 
-.form-card p {
-  margin-top: 16px;
-  text-align: center;
-  font-size: 14px;
-  color: #9ca3af;
-}
-
-.form-card a {
-  color: #6366f1;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.form-card a:hover {
-  text-decoration: underline;
-}
+ 

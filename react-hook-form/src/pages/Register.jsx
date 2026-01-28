@@ -1,4 +1,4 @@
-import React from "react";
+
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 
@@ -7,8 +7,10 @@ const Register = () => {
     register,
     handleSubmit,
     formState: { errors,isSubmitting },
-    reset
+    reset,
   } = useForm();
+
+
 
  
 
@@ -18,14 +20,16 @@ const Register = () => {
   };
 
   return (
-    <div className="main-con">
-      <form className="form-card" onSubmit={handleSubmit(onSubmit)}>
-        <h2 className="title">Register</h2>
+    <div className="main-con bg-bluish-500 min-h-screen flex justify-center items-center">
+      <form className="form-card w-full max-w-[400px] bg-formcolor p-[30px] rounded-xl shadow-2xl" onSubmit={handleSubmit(onSubmit)}>
+        <h2 className="title text-center mb-[25px] text-gray-200 text-xl">Register</h2>
 
-        <div className="input-con">
-          <label>UserName</label>
+        <div className="input-con flex flex-col mb-1.5">
+          <label className="mb-1.5 text-[14px] text-gray-400">UserName</label>
           <input
             type="text"
+            placeholder="enter userName"
+             className="input"
             {...register("UserName", {
               required: "UserName is required",
               minLength: {
@@ -35,14 +39,16 @@ const Register = () => {
             })}
           />
           {errors.UserName && (
-            <p className="err-msg">{errors.UserName.message}</p>
+            <p className="err-msg mt-0.5 text-xs text-red-400">{errors.UserName.message}</p>
           )}
         </div>
 
-        <div className="input-con">
-          <label>Email</label>
+        <div className="input-con flex flex-col mb-1.5">
+          <label className="mb-1.5 text-[14px] text-gray-400">Email</label>
           <input
             type="text"
+            placeholder="enter your email"
+             className="input"
             {...register("email", {
               required: "Email is required",
               pattern: {
@@ -53,14 +59,16 @@ const Register = () => {
             })}
           />
           {errors.email && (
-            <p className="err-msg">{errors.email.message}</p>
+            <p className="err-msg mt-0.5 text-xs text-red-400">{errors.email.message}</p>
           )}
         </div>
 
-        <div className="input-con">
-          <label>Password</label>
+        <div className="input-con flex flex-col mb-1.5">
+          <label className="mb-1.5 text-[14px] text-gray-400">Password</label>
           <input
             type="password"
+            placeholder="enter your password"
+             className="input "
             {...register("password", {
               required: "Password is required",
               minLength: {
@@ -70,7 +78,7 @@ const Register = () => {
             })}
           />
           {errors.password && (
-            <p className="err-msg">{errors.password.message}</p>
+            <p className="err-msg mt-0.5 text-xs text-red-400">{errors.password.message}</p>
           )}
         </div>
 
@@ -78,9 +86,9 @@ const Register = () => {
           {isSubmitting ? "Registering..." : "Register"}
         </button>
 
-        <p>
+        <p className=" text-gray-400 mt-2">
           Already have an account? 
-          <Link to="/login">Login</Link>
+          <Link className="no-underline" to="/login">Login</Link>
         </p>
       </form>
     </div>
