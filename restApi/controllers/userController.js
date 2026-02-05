@@ -87,7 +87,7 @@ export const loginUser = async (req, res) => {
     if (!user) {
         return res.status(400).json({
             success: false,
-            message: "user not found",
+            message: "invalid email or password",
         });
     }
 
@@ -113,12 +113,18 @@ export const loginUser = async (req, res) => {
 }
 
 export const logoutUser = async (req, res) => {
-    res.cookie('token', '', {
-        httpOnly: true,
-        expires: new Date(0),
-    });
-
-    res.status(200).json({ success: true, message: "Logged out successfully" });
+    try {
+        res.clearCookie('token',{
+             httpOnly : true,//prevent js to access cookie
+            secure : process.env.NODE_ENV === "production",  //use secure cookie in production
+            sameSite:process.env.NODE_ENV === "production" ? 'none' :'strict', // use for csrf protection
+          
+        })
+        res.json({success : true , message: "logged Out"})
+    } catch (error) {
+        console.log(error.message)
+         res.json({success : false , message: error.message})
+    }
 }
 
 export const getUsers = async (req, res) => {
@@ -176,6 +182,7 @@ export const userInfo = async (req, res) => {
         const userId = req.userId;
         // console.log("id", req.userId)
         const user = await User.findById(userId).select('-passWord');
+          await new Promise((resolve) => setTimeout(resolve, 3000));
 
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });

@@ -1,0 +1,38 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useStudentDashboard } from "@/hooks/student/useStudentDashboard";
+import Loader from "@/components/common/Loader";
+
+export default function StudentDashboard() {
+  const { data, isLoading } = useStudentDashboard();
+
+  if (isLoading) return <Loader />;
+
+  const { profile } = data;
+
+  return (
+    <div className="max-w-md mx-auto mt-10">
+      <Card>
+        <CardHeader>
+          <CardTitle>My Profile</CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Name</p>
+            <p className="font-medium">{profile.name}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Email</p>
+            <p className="font-medium">{profile.email}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Role</p>
+            <p className="font-medium capitalize">{profile.role}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
