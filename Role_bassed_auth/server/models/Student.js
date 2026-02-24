@@ -8,7 +8,7 @@ const studentSchema = new mongoose.Schema(
     role: { type: String, default: "student" },
     createdBy: { type: mongoose.Schema.Types.ObjectId },
     profileImage: { type: String },
-    isActive: { type: Boolean, default: true },
+    isAvailable: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

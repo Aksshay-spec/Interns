@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 
 import { useLogin } from "@/hooks/useLogin";
 import { redirectByRole } from "@/utils/roleRedirect";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -27,10 +28,15 @@ export default function Login() {
     try {
       const res = await mutateAsync(data);
       console.log("res", res.user);
+
       login(res.token, res.user);
+      if(res.user){
+        toast.success("Login successful!")
+      }
       redirectByRole(res.user.role, navigate);
-    } catch {
-      alert("Invalid email or password");
+    } catch (error) {
+        toast.error("Invalid email or password" , error.message);
+      // alert("Invalid email or password");
     }
   };
 

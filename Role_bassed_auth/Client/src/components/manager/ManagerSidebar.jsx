@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, UserPlus , ClipboardList , History} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ManagerSidebarContent = () => {
@@ -20,6 +20,54 @@ const ManagerSidebarContent = () => {
       >
         <LayoutDashboard size={18} />
         Dashboard
+      </Link>
+      <Link
+        to={`${basePath}/addstudent`}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+          "text-slate-300 hover:bg-slate-800 hover:text-white",
+          location.pathname === `${basePath}/addstudent` &&
+            "bg-slate-800 text-white"
+        )}
+      >
+        <UserPlus size={18} />
+        Add Student
+      </Link>
+      <Link
+        to={`${basePath}/team`}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+          "text-slate-300 hover:bg-slate-800 hover:text-white",
+          location.pathname === `${basePath}/team` &&
+            "bg-slate-800 text-white"
+        )}
+      >
+        <UserPlus size={18} />
+        Team
+      </Link>
+      <Link
+        to={`${basePath}/task`}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+          "text-slate-300 hover:bg-slate-800 hover:text-white",
+          location.pathname === `${basePath}/task` &&
+            "bg-slate-800 text-white"
+        )}
+      >
+        <ClipboardList size={18} />
+        Task
+      </Link>
+      <Link
+        to={`${basePath}/history`}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+          "text-slate-300 hover:bg-slate-800 hover:text-white",
+          location.pathname === `${basePath}/history` &&
+            "bg-slate-800 text-white"
+        )}
+      >
+        <History size={18} />
+        History
       </Link>
     
         

@@ -45,6 +45,18 @@ const AdminSidebarContent = () => {
           <UserPlus size={18} />
           Add Student
         </Link>
+        <Link
+          to="/admin/addteam"
+          className={cn(
+            "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+            "text-slate-300 hover:bg-slate-800 hover:text-white",
+            location.pathname === "/admin/addteam" &&
+              "bg-slate-800 text-white"
+          )}
+        >
+          <UserPlus size={18} />
+          Add Team
+        </Link>
     </nav>
   );
 };

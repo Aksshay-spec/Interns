@@ -32,7 +32,7 @@ const StudentHeader = () => {
 
           <SheetContent
             side="top"
-           className="h-screen w-full bg-slate-900 text-white p-4"
+           className="max-h-full w-full bg-slate-900 text-white p-4"
           >
             <h2 className="mb-4 font-semibold">Student</h2>
             <StudentSidebarContent />

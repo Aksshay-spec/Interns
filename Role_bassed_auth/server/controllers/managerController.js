@@ -1,6 +1,12 @@
 import Student from "../models/Student.js";
 import Manager from "../models/Manager.js";
+import Admin from "../models/Admin.js";
+import Team from "../models/Team.js"
 import bcrypt from "bcryptjs";
+
+
+import Task from "../models/Task.js";
+import CompletedTask from "../models/CompletedTask.js";
 
 export const managerDashboard = async (req, res) => {
   const students = await Student.find({
@@ -77,5 +83,130 @@ export const updateProfile = async (req, res) => {
       message: "Profile update failed",
       error: error.message,
     });
+  }
+};
+
+export const addStudent = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    // console.log("Register User - Request Body:", req.body);
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    const adminExists = await Admin.findOne({ email });
+    const managerExists = await Manager.findOne({ email });
+    const studentExists = await Student.findOne({ email });
+
+    if (adminExists || managerExists || studentExists) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+      const student = await Student.create({
+        name,
+        email,
+        password: hashedPassword,
+        createdBy: req.user.id,
+      });
+      console.log("running")
+      return res.status(201).json({
+        message: "Student registered successfully",
+        user: student,
+      });
+  } catch (error) {
+    res.status(500).json({ message: "Error in registering student"});
+  }
+};  
+export const getStudents =  async (req, res) => {
+  try {
+    const students = await Student.find({ createdBy : req.user.id }).select("-password").populate("createdBy");
+    if(students && students[0].createdBy){
+      const manager = await Manager.findOne({_id : req.user.id})
+    
+      return res.json({students,manager});
+    }
+    res.json({students});
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching students", error });
+  }
+}
+export const getStudent =  async (req, res) => {
+  try {
+    const {sId} = req.params
+    console.log("running1 ")
+    const student = await Student.findById( sId ).select("-password").populate("createdBy");
+    console.log("running2 ")
+    if(student && student.createdBy){
+      const manager = await Manager.findById(req.user.id)
+    
+      return res.json({student,manager});
+    }
+    res.json({student});
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching student", error });
+  }
+}
+export const getAvailableStudents =  async (req, res) => {
+  try {
+    const students = await Student.find({ isAvailable : true }).select("-password").populate("createdBy");
+   
+    res.json({students});
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching students", error });
+  }
+}
+
+export const getTeams = async (req,res) =>{
+    const teams = await Team.find({teamLeader : req.user.id}).populate("createdBy").populate("teamLeader").populate("teamMembers")
+    return res.status(200).json({
+        success : true , 
+        teams,
+    })
+}
+
+export const deleteStudent = async (req, res) => {
+  try {
+    const managerId = req.user.id;
+    const { studentId } = req.params;
+
+  
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+   
+    if (student.createdBy.toString() !== managerId.toString()) {
+      return res.status(403).json({
+        message: "Not authorized to delete this student",
+      });
+    }
+
+
+
+ 
+    await Team.updateMany(
+      { teamMembers: studentId },
+      { $pull: { teamMembers: studentId } }
+    );
+
+   
+    await Task.updateMany(
+      { "assignedTo.student": studentId },
+      { $pull: { assignedTo: { student: studentId } } }
+    );
+
+   
+    await CompletedTask.deleteMany({ student: studentId });
+
+    await Student.findByIdAndDelete(studentId);
+
+    return res.status(200).json({
+      message: "Student deleted successfully and references cleaned",
+    });
+
+  } catch (error) {
+    console.error("deleteStudent error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

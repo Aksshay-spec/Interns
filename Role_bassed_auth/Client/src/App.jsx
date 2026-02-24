@@ -7,9 +7,23 @@ import Unauthorized from "./components/common/Unauthorized";
 import AddManager from "./pages/admin/AddManager";
 import AddStudent from "./pages/admin/AddStudent";
 import AdminProfile from "./pages/admin/Profile";
+import AddTeam from "./pages/admin/AddTeam";
+
+
+
+import StudentProfile from "./pages/student/Profile";
+import Tasks from "./pages/student/Tasks";
+import TaskDetails from "./pages/student/TaskDetails";
+
+
 
 import ManagerProfile from "./pages/manager/Profile";
-import StudentProfile from "./pages/student/Profile";
+import AddStudentManager from "./pages/manager/AddStudent"
+import Team from "./pages/manager/Team"
+import AddMembers from "./pages/manager/AddMembers"
+import Student from "./pages/manager/Student"
+import Task from "./pages/manager/Task"
+import History from "./pages/manager/History"
 
 
 // layouts
@@ -44,6 +58,7 @@ export default function App() {
         <Route path="/admin/profile" element={<AdminProfile />} />
         <Route path="/admin/addmanager" element={<AddManager />} />
         <Route path="/admin/addstudent" element={<AddStudent />} />
+        <Route path="/admin/addteam" element={<AddTeam />} />
       </Route>
     </Route>
 
@@ -51,6 +66,12 @@ export default function App() {
       <Route element={<ManagerLayout />}>
         <Route path="/manager/dashboard" element={<ManagerDashboard />} />
         <Route path="/manager/profile" element={<ManagerProfile />} />
+        <Route path="/manager/addstudent" element={<AddStudentManager />} />
+        <Route path="/manager/team" element={<Team />} />
+        <Route path="/manager/:teamId/addmembers" element={<AddMembers />} />
+        <Route path="/manager/student/:sId" element={<Student />} />
+        <Route path="/manager/task" element={<Task />} />
+        <Route path="/manager/history" element={<History />} />
       </Route>
     </Route>
 
@@ -58,6 +79,8 @@ export default function App() {
       <Route element={<StudentLayout />}>
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route path="/student/profile" element={<StudentProfile />} />
+        <Route path="/student/tasks" element={<Tasks />} />
+        <Route path="/student/task/:taskId" element={<TaskDetails />} />
       </Route>
     </Route>
   </Route>

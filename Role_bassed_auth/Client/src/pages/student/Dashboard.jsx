@@ -10,7 +10,7 @@ export default function StudentDashboard() {
   const { profile } = data;
 
   return (
-    <div className="max-w-md mx-auto mt-10">
+    <div className="min-w-full mt-">
       <Card>
         <CardHeader>
           <CardTitle>My Profile</CardTitle>

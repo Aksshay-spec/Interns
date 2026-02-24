@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard , ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const StudentSidebarContent = () => {
@@ -20,6 +20,18 @@ const StudentSidebarContent = () => {
       >
         <LayoutDashboard size={18} />
         Dashboard
+      </Link>
+      <Link
+        to={`${basePath}/tasks`}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+          "text-slate-300 hover:bg-slate-800 hover:text-white",
+          location.pathname === `${basePath}/tasks` &&
+            "bg-slate-800 text-white"
+        )}
+      >
+        <ClipboardList size={18} />
+        Tasks
       </Link>
         
       

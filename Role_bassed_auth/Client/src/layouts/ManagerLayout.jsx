@@ -18,7 +18,7 @@ const ManagerLayout = () => {
       <div className="flex flex-1">
         <ManagerSidebar role="manager" />
 
-        <main className="flex-1 bg-slate-100 p-6">
+        <main className="flex-1 bg-slate-100 p-4">
           <Outlet />
         </main>
       </div>

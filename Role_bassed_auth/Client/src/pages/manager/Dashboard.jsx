@@ -4,6 +4,7 @@ import Loader from "@/components/common/Loader";
 
 export default function ManagerDashboard() {
   const { data, isLoading } = useManagerDashboard();
+  console.log("data",data)
 
   if (isLoading) return <Loader />;
 

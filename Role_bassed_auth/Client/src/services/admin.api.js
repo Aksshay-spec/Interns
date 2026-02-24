@@ -15,3 +15,22 @@ export const registerStudentApi = async (data) => {
   const res = await api.post("/admin/addstudent", data);
   return res.data;
 };
+
+export const deleteManagerApi = async (managerId) => {
+      const { data } = await api.delete(
+        `/admin/manager/${managerId}`
+      );
+      return data;
+    }
+export const deleteStudentApi = async (studentId) => {
+      const { data } = await api.delete(
+        `/admin/student/${studentId}`
+      );
+      return data;
+    }
+export const deleteTeamApi = async (teamId) => {
+      const { data } = await api.delete(
+        `/admin/teams/${teamId}`
+      );
+      return data;
+    }

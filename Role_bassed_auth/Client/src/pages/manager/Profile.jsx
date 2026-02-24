@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
-
+import toast from "react-hot-toast";
 
 const Profile = () => {
-  const { user , setUser } = useAuth();
-//   console.log("user", user);
-  
+  const { user, setUser } = useAuth();
+  //   console.log("user", user);
+
   const navigate = useNavigate();
 
   const { register, handleSubmit, reset } = useForm({
@@ -27,7 +27,11 @@ const Profile = () => {
         name: user.name || "",
         email: user.email || "",
       });
-      setPreview( user?.profileImage ? `http://localhost:4000${user?.profileImage}` : "/avatar-holder.avif" );
+      setPreview(
+        user?.profileImage
+          ? `http://localhost:4000${user?.profileImage}`
+          : "/avatar-holder.avif",
+      );
     }
   }, [user, reset]);
 
@@ -49,33 +53,36 @@ const Profile = () => {
 
     const res = await mutateAsync(formData);
     // console.log("res", res)
-    
+
     localStorage.setItem("user", JSON.stringify(res?.data?.user));
     setUser(res?.data?.user);
+    if(res){
+      toast.success("Profile updated successfully!");
+    }
     navigate("/manager/dashboard");
-     
   };
 
   return (
     <div className="sm:min-w-xl px-4">
-      <div className="sm:min-w-xl bg-slate-900 rounded-xl shadow-xl border border-slate-800 p-6">
+      <div className="sm:min-w-xl bg-white rounded-xl shadow-md border border-slate-200 p-6">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-white">My Profile</h1>
-          <p className="text-sm text-slate-400">
-            Update your personal information
-          </p>
+          <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
+          
         </div>
 
         {/* Avatar */}
         <div className="flex flex-col items-center mb-6">
           <img
-            src={preview || `http://localhost:4000${user?.profileImage || "/avatar-holder.avif"}`}
+            src={
+              preview ||
+              `http://localhost:4000${user?.profileImage || "/avatar-holder.avif"}`
+            }
             alt="Profile"
-            className="w-28 h-28 rounded-full object-cover border-4 border-slate-700 shadow"
+            className="w-28 h-28 rounded-full object-cover border-4 border-slate-300 shadow"
           />
 
-          <label className="mt-3 cursor-pointer text-sm text-indigo-400 hover:underline">
+          <label className="mt-3 cursor-pointer text-sm text-indigo-600 hover:underline">
             Change photo
             <input
               type="file"
@@ -100,7 +107,7 @@ const Profile = () => {
             </label>
             <input
               {...register("name")}
-              className="mt-1 w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
@@ -110,28 +117,31 @@ const Profile = () => {
             </label>
             <input
               {...register("email")}
-             
-              className="mt-1 w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
-           <div>
-            <label className="block text-sm font-medium text-slate-300">Current Password</label>
+          <div>
+            <label className="block text-sm font-medium text-slate-300">
+              Current Password
+            </label>
             <input
               type="password"
               placeholder="Enter current password"
-              className="mt-1 w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               {...register("currentPassword")}
             />
           </div>
 
           {/* New Password */}
           <div>
-            <label className="block text-sm font-medium text-slate-300">New Password</label>
+            <label className="block text-sm font-medium text-slate-300">
+              New Password
+            </label>
             <input
               type="password"
               placeholder="Minimum 6 characters"
-              className="mt-1 w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               {...register("newPassword", {
                 minLength: {
                   value: 6,
@@ -143,25 +153,28 @@ const Profile = () => {
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium text-slate-300">Confirm New Password</label>
+            <label className="block text-sm font-medium text-slate-300">
+              Confirm New Password
+            </label>
             <input
               type="password"
               placeholder="Re-enter new password"
-              className="mt-1 w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               {...register("confirmPassword", {
                 validate: (value, formValues) =>
                   value === formValues.newPassword || "Passwords do not match",
               })}
             />
           </div>
-
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full rounded-lg bg-indigo-600 text-white py-2 font-semibold hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {isPending ? "Updating..." : "Update Profile"}
-          </button>
+          <div className="flex justify-end pt-4 border-t border-slate-200">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full sm:w-auto rounded-lg bg-indigo-600 text-white py-2 font-semibold hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {isPending ? "Updating..." : "Update Profile"}
+            </button>
+          </div>
         </form>
       </div>
     </div>

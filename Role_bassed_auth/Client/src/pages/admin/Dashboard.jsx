@@ -4,6 +4,7 @@ import Loader from "@/components/common/Loader";
 
 export default function Dashboard() {
   const { data, isLoading } = useAdminDashboard();
+  // console.log("Dashboard data:", data);
 
   if (isLoading) return <Loader />;
 

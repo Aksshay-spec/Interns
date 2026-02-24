@@ -1,5 +1,6 @@
 import express from "express";
 import { studentDashboard , updateProfile} from "../controllers/studentController.js";
+import { getStudentTasks , getSingleTask , submitTask } from "../controllers/taskController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { authorize } from "../middlewares/roleMiddleware.js";
 import {upload} from "../config/multer.js";
@@ -19,4 +20,7 @@ router.put(
   updateProfile
 );
 
+router.get("/tasks", authMiddleware,authorize("student"), getStudentTasks);
+router.get("/task/:taskId", authMiddleware, authorize("student"), getSingleTask);
+router.patch("/task/:taskId", authMiddleware, authorize("student"), submitTask);
 export default router;
