@@ -1,0 +1,13 @@
+{
+  "name": "day1-mvc-crud-api",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "mongoose": "^9.1.5"
+  }
+}
