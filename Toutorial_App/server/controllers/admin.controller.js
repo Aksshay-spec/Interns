@@ -23,19 +23,27 @@ export const getPendingTenants = async (req, res) => {
 // Get all tenants (for admin dashboard)
 export const getAllTenants = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const totalTenants = await Tenant.countDocuments();
+
     const tenants = await Tenant.find()
       .populate("ownerUserId", "name email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    return res.status(200).json({
-      message: "Tenants fetched successfully",
-      data: tenants,
+    res.status(200).json({
+      tenants,
+      currentPage: page,
+      totalPages: Math.ceil(totalTenants / limit),
+      totalTenants,
     });
   } catch (error) {
-    console.error("Get All Tenants Error:", error);
-    return res.status(500).json({
-      message: "Server Error",
-    });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -75,35 +83,6 @@ export const approveTenant = async (req, res) => {
   }
 };
 
-export const rejectTenant = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const tenant = await Tenant.findById(id);
-
-    if (!tenant) {
-      return res.status(404).json({
-        message: "Tenant not found",
-      });
-    }
-
-    tenant.status = "inactive";
-    await tenant.save();
-
-    // Also update the owner user status to inactive
-    await User.findByIdAndUpdate(tenant.ownerUserId, { status: "inactive" });
-
-    return res.status(200).json({
-      message: "Tenant rejected successfully",
-      data: tenant,
-    });
-  } catch (error) {
-    console.error("Reject Tenant Error:", error);
-    return res.status(500).json({
-      message: "Server Error",
-    });
-  }
-};
 
 export const blockTenant = async (req, res) => {
   try {

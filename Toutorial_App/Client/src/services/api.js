@@ -6,7 +6,7 @@ const API = axios.create({
 
 // Attach token automatically
 API.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("token");
+  const token = sessionStorage.getItem("token"); // changed here
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -15,4 +15,4 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-export default API
+export default API;

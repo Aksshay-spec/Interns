@@ -32,7 +32,7 @@ const AdminSidebarContent = () => {
         )}
       >
         <ClipboardList size={18} />
-        Pending Requests
+        Tenants
       </Link>
     </nav>
   );

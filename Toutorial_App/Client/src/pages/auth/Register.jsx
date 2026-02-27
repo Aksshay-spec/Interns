@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useRegister } from "@/hooks/auth/useAuthMutations";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function Register() {
     registerMutation.mutate(data, {
       onSuccess: () => {
         toast.success("Registration successful! Please wait for approval.");
-        navigate('/login')
+        navigate("/login");
         reset();
       },
       onError: (err) => {
