@@ -100,7 +100,7 @@ export const approveTenant = async (req, res) => {
 export const blockTenant = async (req, res) => {
   try {
     const { id } = req.params;
-
+ 
     const tenant = await Tenant.findById(id).populate("ownerUserId");
 
     if (!tenant) {
