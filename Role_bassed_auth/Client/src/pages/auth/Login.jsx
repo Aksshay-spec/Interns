@@ -60,7 +60,7 @@ export default function Login() {
               <Input
                 {...register("email", { required: true })}
                 placeholder="you@example.com"
-                className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500
+                className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 
                            focus-visible:ring-2 focus-visible:ring-slate-500"
               />
             </div>
