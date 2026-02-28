@@ -2,13 +2,24 @@ import nodemailer from "nodemailer";
 
 // Create reusable transporter object using SMTP transport
 const createTransporter = () => {
+  const emailHost = process.env.EMAIL_HOST || process.env.MAIL_HOST;
+  const emailPort = Number(process.env.EMAIL_PORT || 587);
+  const emailUser = process.env.EMAIL_USER;
+  const emailPassword = process.env.EMAIL_PASSWORD;
+
+  if (!emailHost || !emailUser || !emailPassword) {
+    throw new Error(
+      "Email configuration missing. Set EMAIL_HOST (or MAIL_HOST), EMAIL_USER, and EMAIL_PASSWORD in server/.env"
+    );
+  }
+
   return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST, // e.g., smtp.gmail.com
-    port: process.env.EMAIL_PORT || 587,
-    secure: process.env.EMAIL_PORT === "465", // true for 465, false for other ports
+    host: emailHost,
+    port: emailPort,
+    secure: emailPort === 465,
     auth: {
-      user: process.env.EMAIL_USER, // your email
-      pass: process.env.EMAIL_PASSWORD, // your email password or app password
+      user: emailUser,
+      pass: emailPassword,
     },
   });
 };
