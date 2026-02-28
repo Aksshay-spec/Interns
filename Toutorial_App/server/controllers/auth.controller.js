@@ -2,6 +2,10 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { Tenant } from "../models/tenant.model.js";
 import { User } from "../models/user.model.js";
+import {
+  sendNewTenantNotificationToAdmin,
+  sendRegistrationConfirmation,
+} from "../services/email.service.js";
 
 export const registerTenant = async (req, res) => {
   try {
@@ -40,6 +44,20 @@ export const registerTenant = async (req, res) => {
  
     user.tenantId = tenant._id;
     await user.save();
+
+    // Send confirmation email to tenant
+    await sendRegistrationConfirmation(email, name, tenantName);
+
+    // Send notification email to admin (if admin email is configured)
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      await sendNewTenantNotificationToAdmin(
+        adminEmail,
+        tenantName,
+        name,
+        email
+      );
+    }
 
     return res.status(201).json({
       message: "Registration submitted. Wait for admin approval.",

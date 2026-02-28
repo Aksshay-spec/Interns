@@ -1,5 +1,9 @@
 import { Tenant } from "../models/tenant.model.js";
 import { User } from "../models/user.model.js";
+import {
+  sendApprovalNotification,
+  sendBlockNotification,
+} from "../services/email.service.js";
 
 // Get all pending tenant requests
 export const getPendingTenants = async (req, res) => {
@@ -51,7 +55,7 @@ export const approveTenant = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const tenant = await Tenant.findById(id);
+    const tenant = await Tenant.findById(id).populate("ownerUserId");
 
     if (!tenant) {
       return res.status(404).json({
@@ -69,7 +73,16 @@ export const approveTenant = async (req, res) => {
     await tenant.save();
 
     // Also update the owner user status to active
-    await User.findByIdAndUpdate(tenant.ownerUserId, { status: "active" });
+    await User.findByIdAndUpdate(tenant.ownerUserId._id, { status: "active" });
+
+    // Send approval email to tenant owner
+    const loginUrl = process.env.CLIENT_URL || null;
+    await sendApprovalNotification(
+      tenant.ownerUserId.email,
+      tenant.ownerUserId.name,
+      tenant.name,
+      loginUrl
+    );
 
     return res.status(200).json({
       message: "Tenant approved successfully",
@@ -88,7 +101,7 @@ export const blockTenant = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const tenant = await Tenant.findById(id);
+    const tenant = await Tenant.findById(id).populate("ownerUserId");
 
     if (!tenant) {
       return res.status(404).json({
@@ -100,7 +113,14 @@ export const blockTenant = async (req, res) => {
     await tenant.save();
 
     // Also update the owner user status to blocked
-    await User.findByIdAndUpdate(tenant.ownerUserId, { status: "blocked" });
+    await User.findByIdAndUpdate(tenant.ownerUserId._id, { status: "blocked" });
+
+    // Send block notification email to tenant owner
+    await sendBlockNotification(
+      tenant.ownerUserId.email,
+      tenant.ownerUserId.name,
+      tenant.name
+    );
 
     return res.status(200).json({
       message: "Tenant blocked successfully",

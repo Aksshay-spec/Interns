@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+Client/node_modules/
+server/node_modules/
+
+# Build outputs
+Client/dist/
+Client/dist-ssr/
+server/dist/
+coverage/
+
+# Environment files (keep examples)
+.env
+.env.*
+Client/.env
+Client/.env.*
+server/.env
+server/.env.*
+!**/.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime / temp files
+*.pid
+*.seed
+*.pid.lock
+*.tmp
+*.temp
+
+# Uploads / generated assets
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Editor / OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
