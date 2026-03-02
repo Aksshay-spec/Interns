@@ -3,7 +3,7 @@ import { authorizeRoles } from "../middlewares/role.middleware.js";
 import express from "express";
 import {
   approveTenant,
-  
+  makeTenantInactive,
   blockTenant,
   getPendingTenants,
   getAllTenants,
@@ -43,6 +43,13 @@ router.patch(
   authMiddleware,
   authorizeRoles("superadmin"),
   approveTenant
+);
+// inactive tenant
+router.patch(
+  "/tenants/:id/inactive",
+  authMiddleware,
+  authorizeRoles("superadmin"),
+  makeTenantInactive
 );
 
 

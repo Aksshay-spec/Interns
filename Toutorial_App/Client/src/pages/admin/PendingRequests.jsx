@@ -39,6 +39,7 @@ export default function PendingRequests() {
     isError,
     handleApprove,
     handleBlock,
+    handleInactive,
     isActionLoading,
   } = usePendingTenants(currentPage);
   
@@ -133,6 +134,11 @@ export default function PendingRequests() {
                                 onClick={() => handleApprove(tenant._id)}
                               >
                                 Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleInactive(tenant._id)}
+                              >
+                                Inactive
                               </DropdownMenuItem>
 
                               <DropdownMenuItem

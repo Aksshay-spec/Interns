@@ -21,6 +21,18 @@ const TenantSidebarContent = () => {
         <LayoutDashboard size={18} />
         Dashboard
       </Link>
+      <Link
+        to={`${basePath}/add-tutor`}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+          "text-slate-300 hover:bg-slate-800 hover:text-white",
+          location.pathname === `${basePath}/add-tutor` &&
+            "bg-slate-800 text-white"
+        )}
+      >
+        <LayoutDashboard size={18} />
+        Add Tutor
+      </Link>
 
     </nav>
   );
