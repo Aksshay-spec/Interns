@@ -39,6 +39,7 @@ export default function PendingRequests() {
     isError,
     handleApprove,
     handleBlock,
+    handleInactive,
     isActionLoading,
   } = usePendingTenants(currentPage);
   
@@ -78,7 +79,7 @@ export default function PendingRequests() {
                       <TableHead>Email</TableHead>
                       <TableHead>Plan</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead >Action</TableHead>
+                      <TableHead>Action</TableHead>
                     </TableRow>
                   </TableHeader>
 
@@ -103,7 +104,7 @@ export default function PendingRequests() {
 
                         <TableCell>
                           <span
-                            className={`px-3 py-1 text-xs rounded-full font-medium capitalize ${
+                            className={`px-3 py-1 text-xs rounded-full font-medium ${
                               tenant.status === "inactive"
                                 ? "bg-yellow-100 text-yellow-800"
                                 : tenant.status === "active"
@@ -119,7 +120,7 @@ export default function PendingRequests() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
-                              className="w-20 px-1 border-1 capitalize "
+                                className="capitalize w-20 border-2 "
                                 variant="ghost"
                                 size="sm"
                                 disabled={isActionLoading}
@@ -133,6 +134,11 @@ export default function PendingRequests() {
                                 onClick={() => handleApprove(tenant._id)}
                               >
                                 Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleInactive(tenant._id)}
+                              >
+                                Inactive
                               </DropdownMenuItem>
 
                               <DropdownMenuItem

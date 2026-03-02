@@ -14,6 +14,10 @@ export const getAllTenantsApi = (page = 1, limit = 10) => {
 export const approveTenantApi = (tenantId) => {
   return API.patch(`/admin/tenants/${tenantId}/approve`);
 };
+// inactive tenant
+export const makeTenantInactiveApi = (tenantId) => {
+  return API.patch(`/admin/tenants/${tenantId}/inactive`);
+};
 
 
 

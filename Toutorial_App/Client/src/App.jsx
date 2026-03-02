@@ -12,6 +12,9 @@ import PendingRequests from "@/pages/admin/PendingRequests";
 import TenantLayout from "@/layouts/TenantLayout";
 import TenantDashboard from "@/pages/tenant/TenantDashboard";
 
+import AddTutor from "@/pages/tenant/AddTutor";
+import AddStudent from "@/pages/tenant/AddStudent";
+
 import Register from "@/pages/auth/Register";
 import Login from "@/pages/auth/Login";
 import Unauthorized from "@/components/common/Unauthorized";
@@ -43,6 +46,8 @@ function App() {
         >
           <Route element={<TenantLayout />}>
             <Route path="/tenant/dashboard" element={<TenantDashboard />} />
+            <Route path="/tenant/add-tutor" element={<AddTutor />} />
+            <Route path="/tenant/add-student" element={<AddStudent />} />
           </Route>
         </Route>
       </Route>

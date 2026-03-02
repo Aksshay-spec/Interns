@@ -2,10 +2,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { Tenant } from "../models/tenant.model.js";
 import { User } from "../models/user.model.js";
-import {
-  sendNewTenantNotificationToAdmin,
-  sendRegistrationConfirmation,
-} from "../services/email.service.js";
+import { sendTenantMail } from "../services/mail/mail.service.js";
+import { MAIL_TYPES } from "../services/mail/mail.constant.js";
 
 export const registerTenant = async (req, res) => {
   try {
@@ -23,42 +21,44 @@ export const registerTenant = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-  
+
     const user = await User.create({
       name,
       email,
       passwordHash,
       role: "tenant",
-      tenantId: null, 
+      tenantId: null,
       status: "inactive",
     });
 
-  
+
     const tenant = await Tenant.create({
       name: tenantName,
       ownerUserId: user._id,
-      status: "inactive", 
+      status: "inactive",
       plan: "free",
     });
 
- 
+
     user.tenantId = tenant._id;
     await user.save();
+    // Send mail to admin
+    sendTenantMail(
+      MAIL_TYPES.TENANT_REGISTER_ADMIN,
+      {
+        name: user.name,
+        email: process.env.ADMIN_EMAIL,
+      }
+    ).catch(err => console.error("Admin Mail Error:", err));
 
-    // Send confirmation email to tenant
-    await sendRegistrationConfirmation(email, name, tenantName);
-
-    // Send notification email to admin (if admin email is configured)
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (adminEmail) {
-      await sendNewTenantNotificationToAdmin(
-        adminEmail,
-        tenantName,
-        name,
-        email
-      );
-    }
-
+    // Send welcome mail to tenant
+    sendTenantMail(
+      MAIL_TYPES.TENANT_WELCOME,
+      {
+        name: user.name,
+        email:user.email,
+      }
+    )
     return res.status(201).json({
       message: "Registration submitted. Wait for admin approval.",
     });
@@ -126,12 +126,12 @@ export const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      tenantId: user.tenantId,
-    },
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        tenantId: user.tenantId,
+      },
     });
 
   } catch (error) {

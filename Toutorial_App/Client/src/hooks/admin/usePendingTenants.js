@@ -3,6 +3,7 @@ import {
   getAllTenantsApi,
   approveTenantApi,
   blockTenantApi,
+  makeTenantInactiveApi
 } from "@/services/admin.api";
 import toast from "react-hot-toast";
 
@@ -29,6 +30,16 @@ export const usePendingTenants = (currentPage) => {
       toast.error(error.response?.data?.message || "Failed to approve tenant");
     },
   });
+  const inactiveMutation = useMutation({
+    mutationFn: makeTenantInactiveApi,
+    onSuccess: () => {
+      toast.success("Tenant marked as inactive successfully");
+      queryClient.invalidateQueries(["all-tenants"]);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Failed to mark tenant as inactive");
+    },
+  });
 
 
   const blockMutation = useMutation({
@@ -47,6 +58,11 @@ export const usePendingTenants = (currentPage) => {
       approveMutation.mutate(tenantId);
     }
   };
+  const handleInactive = (tenantId) => {
+    if (window.confirm("Are you sure you want to mark this tenant as inactive?")) {
+      inactiveMutation.mutate(tenantId);
+    }
+  };
 
   const handleBlock = (tenantId) => {
     if (window.confirm("Are you sure you want to block this tenant?")) {
@@ -54,7 +70,7 @@ export const usePendingTenants = (currentPage) => {
     }
   };
 
-  const isLoading_ = approveMutation.isPending || blockMutation.isPending;
+  const isLoading_ = approveMutation.isPending || inactiveMutation.isPending || blockMutation.isPending;
 
   return {
     tenants: data?.data?.tenants || [],
@@ -64,6 +80,7 @@ export const usePendingTenants = (currentPage) => {
     isError,
     handleApprove,
     handleBlock,
+    handleInactive,
     isActionLoading: isLoading_,
   };
 };
