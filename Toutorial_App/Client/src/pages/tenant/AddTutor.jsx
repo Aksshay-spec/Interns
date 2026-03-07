@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,22 +14,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { useRegisterTutor } from "@/hooks/tenant/useRegisterTutor";
 import { useGetTutors } from "@/hooks/tenant/useGetTutors";
 import { useDeleteTutor } from "@/hooks/tenant/useDeleteTutor";
+import { useUpdateTutor } from "@/hooks/tenant/useUpdateTutor";
 
 import toast from "react-hot-toast";
 
 export default function AddTutor() {
-  const { mutateAsync, isPending } = useRegisterTutor();
+  const { mutateAsync: createTutor, isPending: isCreating } =
+    useRegisterTutor();
+  const { mutateAsync: updateTutor, isPending: isUpdating } = useUpdateTutor();
   const { data: tutors, isLoading } = useGetTutors();
+  console.log("Tutors:", tutors);
   const { mutate: deleteTutor } = useDeleteTutor();
+  const [editingTutor, setEditingTutor] = useState(null);
+  const isEditMode = Boolean(editingTutor);
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm();
 
@@ -43,28 +57,72 @@ export default function AddTutor() {
   };
 
   const onSubmit = async (data) => {
-    const res = await mutateAsync(data);
+    if (isEditMode) {
+      const payload = {
+        name: data.name,
+        email: data.email,
+        subjects: data.subjects,
+        experienceYears: data.experienceYears,
+        phone: data.phone,
+      };
+      const res = await updateTutor({
+        tutorId: editingTutor._id,
+        data: payload,
+      });
+      if (res) {
+        toast.success("Tutor updated successfully!");
+        setEditingTutor(null);
+        reset();
+      }
+      return;
+    }
+
+    const res = await createTutor(data);
     if (res) {
       toast.success("Tutor created successfully!");
       reset();
     }
   };
 
+  const handleEdit = (tutor) => {
+    setEditingTutor(tutor);
+    setValue("name", tutor.name || "");
+    setValue("email", tutor.email || "");
+    setValue("password", "");
+    setValue("subjects", tutor.subjects?.join(", ") || "");
+    setValue("experienceYears", tutor.experienceYears ?? 0);
+    setValue("phone", tutor.phone || "");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTutor(null);
+    reset();
+  };
+
+  const handleToggleStatus = async (tutor) => {
+    const nextStatus = tutor.status === "inactive" ? "active" : "inactive";
+
+    const res = await updateTutor({
+      tutorId: tutor._id,
+      data: { status: nextStatus },
+    });
+
+    if (res) {
+      toast.success(`Tutor ${nextStatus} successfully!`);
+    }
+  };
+
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-8">
-      
+    <div className="w-full max-w-6xl mx-auto space-y-8">
       {/* Page Title */}
       <div>
-        <h1 className="text-2xl font-semibold text-slate-800">
-          Add Tutor
-        </h1>
+        <h1 className="text-2xl font-semibold text-slate-800">Add Tutor</h1>
       </div>
 
       {/* Add Tutor Form */}
       <Card className="bg-white border border-slate-200 shadow-sm">
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
             {/* Name */}
             <div>
               <Label>Name</Label>
@@ -104,7 +162,7 @@ export default function AddTutor() {
                 placeholder="Minimum 6 characters"
                 className="mt-1"
                 {...register("password", {
-                  required: "Password is required",
+                  required: isEditMode ? false : "Password is required",
                   minLength: {
                     value: 6,
                     message: "Minimum 6 characters",
@@ -118,16 +176,88 @@ export default function AddTutor() {
               )}
             </div>
 
-            <div className="flex min-w-full md:justify-end pt-4 border-t">
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                {isPending ? "Creating..." : "Create Tutor"}
-              </Button>
+            {/* Subjects */}
+            <div>
+              <Label>Subjects</Label>
+              <Input
+                placeholder="Math, Science"
+                className="mt-1"
+                {...register("subjects", {
+                  required: "Subjects are required",
+                })}
+              />
+              {errors.subjects && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.subjects.message}
+                </p>
+              )}
             </div>
 
+            {/* Experience */}
+            <div>
+              <Label>Experience (Years)</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="0"
+                className="mt-1"
+                {...register("experienceYears", {
+                  required: "Experience is required",
+                  min: {
+                    value: 0,
+                    message: "Experience must be 0 or greater",
+                  },
+                })}
+              />
+              {errors.experienceYears && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.experienceYears.message}
+                </p>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div>
+              <Label>Phone</Label>
+              <Input
+                placeholder="Phone number"
+                className="mt-1"
+                {...register("phone", {
+                  required: "Phone is required",
+                })}
+              />
+              {errors.phone && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.phone.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col md:flex-row justify-center md:justify-end gap-2 pt-4 border-t">
+              {isEditMode && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  className="w-full md:w-35"
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button
+                type="submit"
+                disabled={isCreating || isUpdating}
+                className="bg-indigo-600 w-full md:w-35 hover:bg-indigo-700 text-white"
+              >
+                {isCreating || isUpdating
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditMode
+                    ? "Update Tutor"
+                    : "Create Tutor"}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -146,8 +276,13 @@ export default function AddTutor() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Subjects</TableHead>
+                    <TableHead>Experience</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Toggle</TableHead>
                     <TableHead>Created At</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -158,12 +293,57 @@ export default function AddTutor() {
                         <TableCell>{tutor.name}</TableCell>
                         <TableCell>{tutor.email}</TableCell>
                         <TableCell>
+                          {tutor.subjects?.join(", ") || "-"}
+                        </TableCell>
+                        <TableCell>{tutor.experienceYears ?? "-"}</TableCell>
+                        <TableCell>{tutor.phone || "-"}</TableCell>
+
+                        {/* Status Badge */}
+                        <TableCell>
+                          <span
+                            className={`px-3 py-1 text-xs rounded-full font-medium ${
+                              tutor.status === "inactive"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            {tutor.status === "inactive"
+                              ? "Inactive"
+                              : "Active"}
+                          </span>
+                        </TableCell>
+
+                        {/* Toggle Status */}
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleStatus(tutor)}
+                            disabled={isUpdating}
+                          >
+                            {tutor.status === "inactive"
+                              ? "Activate"
+                              : "Deactivate"}
+                          </Button>
+                        </TableCell>
+
+                        <TableCell>
                           {new Date(tutor.createdAt).toLocaleDateString()}
                         </TableCell>
-                        <TableCell className="text-right">
+
+                        {/* Actions */}
+                        <TableCell className="flex gap-2">
                           <Button
-                            variant="destructive"
                             size="sm"
+                            variant="outline"
+                            onClick={() => handleEdit(tutor)}
+                          >
+                            Edit
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="destructive"
                             onClick={() => handleDelete(tutor._id)}
                           >
                             Delete
@@ -173,7 +353,7 @@ export default function AddTutor() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-sm">
+                      <TableCell colSpan={8} className="text-center text-sm">
                         No tutors found
                       </TableCell>
                     </TableRow>
@@ -184,7 +364,6 @@ export default function AddTutor() {
           )}
         </CardContent>
       </Card>
-
     </div>
   );
 }

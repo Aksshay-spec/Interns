@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const ProtectedRoute = ({ allowedRoles }) => {
   const { user } = useAuth();
+  // console.log("ProtectedRoute: user =", user);  
 
 
   if (!user) {

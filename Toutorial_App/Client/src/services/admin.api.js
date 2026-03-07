@@ -26,4 +26,13 @@ export const blockTenantApi = (tenantId) => {
   return API.patch(`/admin/tenants/${tenantId}/block`);
 };
 
+//get Online Users
+export const getOnlineUsersApi = ()=>{
+  return API.get("/admin/online-users");
+}
+
+//update profile
+export const updateProfileApi = (formData)=>{
+  return API.put("/admin/profile", formData)
+}
 export default API;

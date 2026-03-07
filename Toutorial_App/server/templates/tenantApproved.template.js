@@ -58,20 +58,20 @@ export const tenantApprovedTemplate = (tenant) => ({
                   Everything is set up and ready. We’re excited to have you on board.
                 </p>
 
-                <a href="http://localhost:5173/tenant/dashboard"
-                  style="display:inline-block;
-                  background:linear-gradient(135deg,#16a34a,#22c55e);
-                  color:#fff;
-                  text-decoration:none;
-                  font-size:13px;
-                  font-weight:500;
-                  letter-spacing:.1em;
-                  text-transform:uppercase;
-                  padding:15px 42px;
-                  border-radius:50px;
-                  box-shadow:0 0 28px rgba(34,197,94,.3);">
-                  Enter Dashboard →
-                </a>
+                // <a href="http://localhost:5173/tenant/dashboard"
+                //   style="display:inline-block;
+                //   background:linear-gradient(135deg,#16a34a,#22c55e);
+                //   color:#fff;
+                //   text-decoration:none;
+                //   font-size:13px;
+                //   font-weight:500;
+                //   letter-spacing:.1em;
+                //   text-transform:uppercase;
+                //   padding:15px 42px;
+                //   border-radius:50px;
+                //   box-shadow:0 0 28px rgba(34,197,94,.3);">
+                //   Enter Dashboard →
+                // </a>
 
               </td>
             </tr>
@@ -80,7 +80,7 @@ export const tenantApprovedTemplate = (tenant) => ({
               <td align="center"
                 style="padding:20px 44px 28px;border-top:1px solid #1a2e1c;">
                 <p style="margin:0;font-size:12px;color:#3d5c42;">
-                  Questions? Just reply to this email · © 2025 Your Company
+                  Questions? Just reply to this email · © ${new Date().getFullYear()} Your Company
                 </p>
               </td>
             </tr>

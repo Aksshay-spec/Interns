@@ -63,20 +63,20 @@ export const tenantBlockedTemplate = (tenant) => ({
                   please contact our support team and we will assist you promptly.
                 </p>
 
-                <a href="mailto:support@yourcompany.com"
-                  style="display:inline-block;
-                  background:linear-gradient(135deg,#991b1b,#ef4444);
-                  color:#fff;
-                  text-decoration:none;
-                  font-size:13px;
-                  font-weight:500;
-                  letter-spacing:.1em;
-                  text-transform:uppercase;
-                  padding:15px 42px;
-                  border-radius:50px;
-                  box-shadow:0 0 28px rgba(239,68,68,.3);">
-                  Contact Support →
-                </a>
+                // <a href="mailto:support@yourcompany.com"
+                //   style="display:inline-block;
+                //   background:linear-gradient(135deg,#991b1b,#ef4444);
+                //   color:#fff;
+                //   text-decoration:none;
+                //   font-size:13px;
+                //   font-weight:500;
+                //   letter-spacing:.1em;
+                //   text-transform:uppercase;
+                //   padding:15px 42px;
+                //   border-radius:50px;
+                //   box-shadow:0 0 28px rgba(239,68,68,.3);">
+                //   Contact Support →
+                // </a>
 
               </td>
             </tr>
@@ -86,7 +86,7 @@ export const tenantBlockedTemplate = (tenant) => ({
               <td align="center"
                 style="padding:20px 44px 28px;border-top:1px solid #2e1a1a;">
                 <p style="margin:0;font-size:12px;color:#6b3a3a;">
-                  This action was taken to maintain a secure environment · © 2025 Your Company
+                  This action was taken to maintain a secure environment · © ${new Date().getFullYear()} Your Company
                 </p>
               </td>
             </tr>

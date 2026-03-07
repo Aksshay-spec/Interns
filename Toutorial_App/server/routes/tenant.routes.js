@@ -3,10 +3,17 @@ import {
     registerTutor,
     getTutorsByTenant,
     deleteTutor,
+    updateTutor,
+    registerStudent,
+    getStudentsByTenant,
+    deleteStudent,
+    updateStudent,
+    updateProfile
     
 } from "../controllers/tenant.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
+import { upload } from "../configs/multer.js";
 
 const router = express.Router();
 
@@ -30,10 +37,56 @@ router.get(
 
 // Delete a tutor (tenant only)
 router.delete(
-    "/:tutorId",
+    "/tutors/:tutorId",
     authMiddleware,
     authorizeRoles("tenant"),
     deleteTutor
 );
 
+router.put(
+    "/tutors/:tutorId",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    updateTutor
+);
+
+// Register a student (tenant only)
+router.post(
+    "/register/student",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    registerStudent
+);
+
+// Get all students for a tenant (tenant only)
+router.get(
+    "/students",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    getStudentsByTenant
+);
+
+// Delete a student (tenant only)
+router.delete(
+    "/students/:studentId",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    deleteStudent
+);
+
+router.put(
+    "/students/:studentId",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    updateStudent
+);
+
+//update profile
+router.put(
+  "/profile",
+  authMiddleware,
+  authorizeRoles("tenant"),
+  upload.single("profileImage"),
+  updateProfile
+);
 export default router;

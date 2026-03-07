@@ -87,20 +87,20 @@ export const tenantRegisterAdminTemplate = (tenant) => ({
                   </tr>
                 </table>
 
-                <a href="http://localhost:5173/admin/tenants"
-                  style="display:inline-block;
-                  background:linear-gradient(135deg,#1d4ed8,#3b82f6);
-                  color:#fff;
-                  text-decoration:none;
-                  font-size:13px;
-                  font-weight:500;
-                  letter-spacing:.1em;
-                  text-transform:uppercase;
-                  padding:15px 42px;
-                  border-radius:50px;
-                  box-shadow:0 0 28px rgba(59,130,246,.3);">
-                  Review Request →
-                </a>
+                // <a href="http://localhost:5173/admin/tenants"
+                //   style="display:inline-block;
+                //   background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+                //   color:#fff;
+                //   text-decoration:none;
+                //   font-size:13px;
+                //   font-weight:500;
+                //   letter-spacing:.1em;
+                //   text-transform:uppercase;
+                //   padding:15px 42px;
+                //   border-radius:50px;
+                //   box-shadow:0 0 28px rgba(59,130,246,.3);">
+                //   Review Request →
+                // </a>
 
               </td>
             </tr>
@@ -110,7 +110,7 @@ export const tenantRegisterAdminTemplate = (tenant) => ({
               <td align="center"
                 style="padding:20px 44px 28px;border-top:1px solid #151f33;">
                 <p style="margin:0;font-size:12px;color:#334966;">
-                  Timely review ensures smooth onboarding · © 2025 Your Company
+                  Timely review ensures smooth onboarding · © ${new Date().getFullYear()} Your Company
                 </p>
               </td>
             </tr>

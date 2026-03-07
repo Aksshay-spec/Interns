@@ -9,7 +9,7 @@ const userSchema = new Schema(
     tenantId: {
       type: Schema.Types.ObjectId,
       ref: "Tenant",
-      default: null, 
+      default: null,
     },
 
     role: {
@@ -41,8 +41,25 @@ const userSchema = new Schema(
       enum: ["active", "blocked", "inactive"],
       default: "inactive",
     },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    resetPasswordExpire: {
+      type: Date,
+      default: null,
+    },
+    onlineStatus: {
+      type: Boolean,
+      default: false
+    },
+    profileImage : {
+      type : String,
+      default : ""
+    }
   },
   { timestamps: true }
 );
 
-export const User = model("User", userSchema);
+export const User = model("User", userSchema);   

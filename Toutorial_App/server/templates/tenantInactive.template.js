@@ -61,20 +61,20 @@ export const tenantInactiveTemplate = (tenant) => ({
                   is ready to assist you right away.
                 </p>
 
-                <a href="mailto:support@yourcompany.com"
-                  style="display:inline-block;
-                  background:linear-gradient(135deg,#92400e,#f59e0b);
-                  color:#fff;
-                  text-decoration:none;
-                  font-size:13px;
-                  font-weight:500;
-                  letter-spacing:.1em;
-                  text-transform:uppercase;
-                  padding:15px 42px;
-                  border-radius:50px;
-                  box-shadow:0 0 28px rgba(245,158,11,.3);">
-                  Contact Support →
-                </a>
+                // <a href="mailto:support@yourcompany.com"
+                //   style="display:inline-block;
+                //   background:linear-gradient(135deg,#92400e,#f59e0b);
+                //   color:#fff;
+                //   text-decoration:none;
+                //   font-size:13px;
+                //   font-weight:500;
+                //   letter-spacing:.1em;
+                //   text-transform:uppercase;
+                //   padding:15px 42px;
+                //   border-radius:50px;
+                //   box-shadow:0 0 28px rgba(245,158,11,.3);">
+                //   Contact Support →
+                // </a>
 
               </td>
             </tr>
@@ -84,7 +84,7 @@ export const tenantInactiveTemplate = (tenant) => ({
               <td align="center"
                 style="padding:20px 44px 28px;border-top:1px solid #2e2410;">
                 <p style="margin:0;font-size:12px;color:#6b5a2a;">
-                  We're here to help resolve this quickly · © 2025 Your Company
+                  We're here to help resolve this quickly · © ${new Date().getFullYear()} Your Company
                 </p>
               </td>
             </tr>

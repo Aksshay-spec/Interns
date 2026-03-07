@@ -1,12 +1,15 @@
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
 import express from "express";
+import { upload } from "../configs/multer.js";
 import {
   approveTenant,
   makeTenantInactive,
   blockTenant,
   getPendingTenants,
   getAllTenants,
+  getOnlineUsers,
+  updateProfile
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -61,5 +64,17 @@ router.patch(
   authorizeRoles("superadmin"),
   blockTenant
 );
+
+//update profile
+router.put(
+  "/profile",
+  authMiddleware,
+  authorizeRoles("superadmin"),
+  upload.single("profileImage"),
+  updateProfile
+);
+
+//get online user
+router.get("/online-users", authMiddleware, authorizeRoles("superadmin"), getOnlineUsers)
 
 export default router;

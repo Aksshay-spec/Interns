@@ -23,11 +23,11 @@ const AdminSidebarContent = () => {
       </Link>
 
       <Link
-        to={`${basePath}/pending-requests`}
+        to={`${basePath}/tenants`}
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
           "text-slate-300 hover:bg-slate-800 hover:text-white",
-          location.pathname === `${basePath}/pending-requests` &&
+          location.pathname === `${basePath}/tenants` &&
             "bg-slate-800 text-white"
         )}
       >

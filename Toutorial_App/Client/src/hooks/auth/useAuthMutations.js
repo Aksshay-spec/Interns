@@ -1,5 +1,7 @@
-import { useMutation } from "@tanstack/react-query";
-import { loginApi, registerApi } from "@/services/auth.api";
+import { useMutation , useQueryClient } from "@tanstack/react-query";
+import { loginApi, registerApi , logoutApi } from "@/services/auth.api";
+
+
 
 export const useLogin = () => {
   return useMutation({
@@ -12,3 +14,15 @@ export const useRegister = () => {
     mutationFn: registerApi,
   });
 };
+
+export const useLogOut = ()=>{
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn : logoutApi,
+
+    onSuccess : ()=>{
+      console.log("Logout successful, invalidating online-users query...");
+      queryClient.invalidateQueries({ queryKey : ["online-users"] }) 
+    }
+  })
+}

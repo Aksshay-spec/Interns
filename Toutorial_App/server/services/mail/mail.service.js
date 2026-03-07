@@ -7,9 +7,13 @@ import { tenantWelcomeTemplate } from "../../templates/tenantWelcome.template.js
 import { tenantApprovedTemplate } from "../../templates/tenantApproved.template.js";
 import { tenantInactiveTemplate } from "../../templates/tenantInactive.template.js";
 import { tenantBlockedTemplate } from "../../templates/tenantBlocked.template.js";
+import { tutorAddedTemplate } from "../../templates/tutorAdded.template.js";
+import { studentAddedTemplate } from "../../templates/studentAdded.template.js";
+import { passwordResetTemplate } from "../../templates/passwordReset.template.js";
 
-
+const dummyEmail= "savaraakshay2366@gmail.com";
 export const sendTenantMail = async (type, tenant, options = {}) => {
+  
   try {
     let mailData;
     let recipient;
@@ -28,8 +32,8 @@ export const sendTenantMail = async (type, tenant, options = {}) => {
 
       case MAIL_TYPES.TENANT_APPROVED:
         mailData = tenantApprovedTemplate(tenant);
-        console.log
-        ("Tenant Approved Mail Data:", process.env.ADMIN_EMAIL);
+        // console.log
+          // ("Tenant Approved Mail Data:", process.env.ADMIN_EMAIL);
         recipient = tenant.email;
         break;
 
@@ -44,13 +48,29 @@ export const sendTenantMail = async (type, tenant, options = {}) => {
         recipient = tenant.email;
         break;
 
+      case MAIL_TYPES.TUTOR_ADDED:
+        mailData = tutorAddedTemplate(tenant);
+        recipient = tenant.email;
+        break;
+
+      case MAIL_TYPES.STUDENT_ADDED:
+        mailData = studentAddedTemplate(tenant);
+        recipient = tenant.email;
+        break;
+
+      case MAIL_TYPES.PASSWORD_RESET:
+        mailData = passwordResetTemplate(tenant, options.resetLink);
+        recipient = tenant.email;
+        break;
+
       default:
         throw new Error("Invalid Mail Type");
     }
 
     await transporter.sendMail({
-      from: `"Your Platform Name" <${process.env.EMAIL_USER}>`,
-      to: options.to || recipient,
+      from: `"Tutorial App" <${process.env.EMAIL_USER}>`,
+      // to: options.to || recipient,
+      to:dummyEmail,
       subject: mailData.subject,
       html: mailData.html,
     });

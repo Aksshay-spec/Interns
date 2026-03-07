@@ -61,20 +61,20 @@ export const tenantWelcomeTemplate = (tenant) => ({
                   You will receive an approval notification once the review is complete.
                 </p>
 
-                <a href="mailto:support@yourcompany.com"
-                  style="display:inline-block;
-                  background:linear-gradient(135deg,#7e22ce,#a855f7);
-                  color:#fff;
-                  text-decoration:none;
-                  font-size:13px;
-                  font-weight:500;
-                  letter-spacing:.1em;
-                  text-transform:uppercase;
-                  padding:15px 42px;
-                  border-radius:50px;
-                  box-shadow:0 0 28px rgba(168,85,247,.3);">
-                  Contact Support →
-                </a>
+                // <a href="mailto:support@yourcompany.com"
+                //   style="display:inline-block;
+                //   background:linear-gradient(135deg,#7e22ce,#a855f7);
+                //   color:#fff;
+                //   text-decoration:none;
+                //   font-size:13px;
+                //   font-weight:500;
+                //   letter-spacing:.1em;
+                //   text-transform:uppercase;
+                //   padding:15px 42px;
+                //   border-radius:50px;
+                //   box-shadow:0 0 28px rgba(168,85,247,.3);">
+                //   Contact Support →
+                // </a>
 
               </td>
             </tr>
@@ -84,7 +84,7 @@ export const tenantWelcomeTemplate = (tenant) => ({
               <td align="center"
                 style="padding:20px 44px 28px;border-top:1px solid #2a1230;">
                 <p style="margin:0;font-size:12px;color:#5e3a6b;">
-                  We'll be in touch shortly · © 2025 Your Company
+                  We'll be in touch shortly · © ${new Date().getFullYear()} Your Company
                 </p>
               </td>
             </tr>

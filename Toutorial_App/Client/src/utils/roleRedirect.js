@@ -5,6 +5,8 @@ export const redirectByRole = (role, navigate) => {
     navigate("/tenant/dashboard");
   } else if (role === "tutor") {
     navigate("/tutor/dashboard");
+  } else if (role === "student") {
+    navigate("/student/dashboard");
   } else {
     navigate("/login");
   }

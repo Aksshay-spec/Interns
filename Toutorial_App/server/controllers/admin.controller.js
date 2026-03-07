@@ -1,12 +1,13 @@
 import { Tenant } from "../models/tenant.model.js";
 import { User } from "../models/user.model.js";
-
+import bcrypt from "bcryptjs";
 import { sendTenantMail } from "../services/mail/mail.service.js";
 import { MAIL_TYPES } from "../services/mail/mail.constant.js";
 
 /**
  * Get all pending tenant requests
  */
+const dummyEmail = "savaraakshay2366@gmail.com"
 export const getPendingTenants = async (req, res) => {
   try {
     const tenants = await Tenant.find({ status: "inactive" })
@@ -93,7 +94,8 @@ export const approveTenant = async (req, res) => {
       MAIL_TYPES.TENANT_APPROVED,
       {
         name: tenant.ownerUserId.name,
-        email: tenant.ownerUserId.email,
+        email:dummyEmail
+        // email: tenant.ownerUserId.email,
       }
     ).catch((err) =>
       console.error("Approval Mail Error:", err)
@@ -142,7 +144,8 @@ export const blockTenant = async (req, res) => {
       MAIL_TYPES.TENANT_BLOCKED,
       {
         name: tenant.ownerUserId.name,
-        email: tenant.ownerUserId.email,
+        email:dummyEmail
+        // email: tenant.ownerUserId.email,
       }
     ).catch((err) =>
       console.error("Block Mail Error:", err)
@@ -195,7 +198,8 @@ export const makeTenantInactive = async (req, res) => {
       MAIL_TYPES.TENANT_INACTIVE,
       {
         name: tenant.ownerUserId.name,
-        email: tenant.ownerUserId.email,
+        email:dummyEmail
+        // email: tenant.ownerUserId.email,
       }
     ).catch((err) =>
       console.error("Inactive Mail Error:", err)
@@ -210,6 +214,102 @@ export const makeTenantInactive = async (req, res) => {
     console.error("Make Tenant Inactive Error:", error);
     return res.status(500).json({
       message: "Server Error",
+    });
+  }
+};
+/**
+ * Get all online users
+ */
+export const getOnlineUsers = async (req, res) => {
+  try {
+
+    const onlineUsers = await User.find({ onlineStatus: true })
+      .select("name email role tenantId")
+      .sort({ updatedAt: -1 });
+
+    return res.status(200).json({
+      message: "Online users fetched successfully",
+      totalOnlineUsers: onlineUsers.length,
+      data: onlineUsers
+    });
+
+  } catch (error) {
+
+    console.error("Get Online Users Error:", error);
+
+    return res.status(500).json({
+      message: "Server Error"
+    });
+
+  }
+};
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    // console.log("Admin Profile Update Request for User ID:", userId);
+    
+    const {
+      name,
+      email,
+      currentPassword,
+      newPassword
+    } = req.body;
+    // console.log("Profile Update Request:", {
+      //   userId,
+      //   name,
+      //   email,
+      //   currentPassword,
+      //   newPassword
+      // });
+      // console.log("Profile Update Request Body:", req.body);
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update name
+      if (name) user.name = name;
+      console.log("runnning",user);
+
+    // Update email
+    if (email) user.email = email;
+
+    // Password update logic
+    if (currentPassword && newPassword) {
+
+      const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+
+      if (!isMatch) {
+        return res.status(400).json({
+          message: "Current password is incorrect",
+        });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.passwordHash = await bcrypt.hash(newPassword, salt);
+    }
+
+    // Profile image
+    if (req.file) {
+      user.profileImage = `/uploads/${req.file.filename}`;
+    }
+
+    await user.save();
+
+    const updatedUser = user.toObject();
+    delete updatedUser.passwordHash;
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Profile update failed",
+      error: error.message,
     });
   }
 };

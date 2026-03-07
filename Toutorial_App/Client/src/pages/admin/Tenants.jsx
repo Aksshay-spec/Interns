@@ -29,7 +29,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-export default function PendingRequests() {
+export default function Tenants() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const {

@@ -14,7 +14,7 @@ const Profile = () => {
     defaultValues: {
       name: "",
       email: "",
-    },
+    },  
   });
 
   const { mutateAsync, isPending } = useUpdateProfile();

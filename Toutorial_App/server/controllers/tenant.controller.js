@@ -1,18 +1,45 @@
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { Tenant } from "../models/tenant.model.js";
 import { User } from "../models/user.model.js";
+import { Tutor } from "../models/tutor.model.js";
+import { Student } from "../models/student.model.js";
+import { sendTenantMail } from "../services/mail/mail.service.js";
+import { MAIL_TYPES } from "../services/mail/mail.constant.js";
+import {Tenant} from "../models/tenant.model.js"
+
+const dummyEmail = "savaraakshay2366@gmail.com"
 
 // Register a tutor (by tenant)
 export const registerTutor = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, subjects, experienceYears, phone } = req.body;
     const tenantId = req.user.tenantId; // From auth middleware
 
-    // Check required fields
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields required" });
+    const parsedExperienceYears = Number(experienceYears);
+
+    const normalizedSubjects = Array.isArray(subjects)
+      ? subjects.map((subject) => String(subject).trim()).filter(Boolean)
+      : typeof subjects === "string"
+      ? subjects
+          .split(",")
+          .map((subject) => subject.trim())
+          .filter(Boolean)
+      : [];
+
+
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !phone ||
+      normalizedSubjects.length === 0 ||
+      Number.isNaN(parsedExperienceYears)
+    ) {
+      return res.status(400).json({
+        message:
+          "name, email, password, phone, subjects and experienceYears are required",
+      });
     }
+
 
     // Check if email already exists
     const existingUser = await User.findOne({ email });
@@ -33,13 +60,36 @@ export const registerTutor = async (req, res) => {
       status: "active", // Tutor is active immediately
     });
 
+    // Create tutor profile
+    const tutorProfile = await Tutor.create({
+      tenantId,
+      userId: tutorUser._id,
+      subjects: normalizedSubjects,
+      experienceYears: parsedExperienceYears,
+      phone,
+      status: "active",
+    });
+
+    await sendTenantMail(MAIL_TYPES.TUTOR_ADDED, {
+      name: tutorUser.name,
+      email:dummyEmail
+      // email: tutorUser.email,
+    });
+
+   
+
     return res.status(201).json({
       message: "Tutor registered successfully",
       tutor: {
         _id: tutorUser._id,
+        tutorId: tutorProfile._id,
         name: tutorUser.name,
         email: tutorUser.email,
         role: tutorUser.role,
+        subjects: tutorProfile.subjects,
+        experienceYears: tutorProfile.experienceYears,
+        phone: tutorProfile.phone,
+        status: tutorProfile.status,
       },
     });
   } catch (error) {
@@ -55,10 +105,24 @@ export const getTutorsByTenant = async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
 
-    const tutors = await User.find({
-      tenantId: tenantId,
-      role: "tutor",
-    }).select("-passwordHash");
+    const tutorProfiles = await Tutor.find({ tenantId })
+      .populate("userId", "name email role status createdAt")
+      .sort({ createdAt: -1 });
+
+    const tutors = tutorProfiles
+      .filter((profile) => profile.userId)
+      .map((profile) => ({
+        _id: profile.userId._id,
+        tutorId: profile._id,
+        name: profile.userId.name,
+        email: profile.userId.email,
+        role: profile.userId.role,
+        status: profile.status,
+        subjects: profile.subjects,
+        experienceYears: profile.experienceYears,
+        phone: profile.phone,
+        createdAt: profile.createdAt,
+      }));
 
     return res.status(200).json({
       message: "Tutors fetched successfully",
@@ -78,20 +142,17 @@ export const deleteTutor = async (req, res) => {
     const { tutorId } = req.params;
     const tenantId = req.user.tenantId;
 
-    const tutor = await User.findById(tutorId);
+    const tutorProfile = await Tutor.findOne({
+      tenantId,
+      $or: [{ _id: tutorId }, { userId: tutorId }],
+    });
 
-    if (!tutor) {
+    if (!tutorProfile) {
       return res.status(404).json({ message: "Tutor not found" });
     }
 
-    // Check if tutor belongs to this tenant
-    if (tutor.tenantId.toString() !== tenantId.toString()) {
-      return res.status(403).json({
-        message: "Unauthorized: You can only delete tutors in your tenant",
-      });
-    }
-
-    await User.findByIdAndDelete(tutorId);
+    await User.findByIdAndDelete(tutorProfile.userId);
+    await Tutor.findByIdAndDelete(tutorProfile._id);
 
     return res.status(200).json({
       message: "Tutor deleted successfully",
@@ -100,6 +161,382 @@ export const deleteTutor = async (req, res) => {
     console.error("Delete Tutor Error:", error);
     return res.status(500).json({
       message: "Server Error",
+    });
+  }
+};
+
+// Update a tutor
+export const updateTutor = async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+    const { name, email, subjects, experienceYears, phone, status } = req.body;
+    const tenantId = req.user.tenantId;
+
+    const tutorProfile = await Tutor.findOne({
+      tenantId,
+      $or: [{ _id: tutorId }, { userId: tutorId }],
+    });
+
+    if (!tutorProfile) {
+      return res.status(404).json({ message: "Tutor not found" });
+    }
+
+    const tutorUser = await User.findById(tutorProfile.userId);
+    if (!tutorUser) {
+      return res.status(404).json({ message: "Tutor user not found" });
+    }
+
+    const normalizedSubjects = Array.isArray(subjects)
+      ? subjects.map((subject) => String(subject).trim()).filter(Boolean)
+      : typeof subjects === "string"
+      ? subjects
+          .split(",")
+          .map((subject) => subject.trim())
+          .filter(Boolean)
+      : null;
+
+    if (
+      (subjects !== undefined && normalizedSubjects?.length === 0) ||
+      (experienceYears !== undefined &&
+        (Number.isNaN(Number(experienceYears)) || Number(experienceYears) < 0))
+    ) {
+      return res.status(400).json({
+        message: "Invalid tutor data",
+      });
+    }
+
+    if (email && email !== tutorUser.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser && existingUser._id.toString() !== tutorUser._id.toString()) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      tutorUser.email = email;
+    }
+
+    if (name !== undefined) tutorUser.name = name;
+    await tutorUser.save();
+
+    if (normalizedSubjects) tutorProfile.subjects = normalizedSubjects;
+    if (experienceYears !== undefined) {
+      tutorProfile.experienceYears = Number(experienceYears);
+    }
+    if (phone !== undefined) tutorProfile.phone = phone;
+    if (status !== undefined) tutorProfile.status = status;
+
+    await tutorProfile.save();
+
+    return res.status(200).json({
+      message: "Tutor updated successfully",
+      tutor: {
+        _id: tutorUser._id,
+        tutorId: tutorProfile._id,
+        name: tutorUser.name,
+        email: tutorUser.email,
+        role: tutorUser.role,
+        status: tutorProfile.status,
+        subjects: tutorProfile.subjects,
+        experienceYears: tutorProfile.experienceYears,
+        phone: tutorProfile.phone,
+      },
+    });
+  } catch (error) {
+    console.error("Update Tutor Error:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Register a student (by tenant)
+export const registerStudent = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      rollNumber,
+      classLevel,
+      board,
+      phone,
+      parentName,
+    } = req.body;
+    const tenantId = req.user.tenantId;
+
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !rollNumber ||
+      !classLevel ||
+      !board ||
+      !phone ||
+      !parentName
+    ) {
+      return res.status(400).json({
+        message:
+          "name, email, password, rollNumber, classLevel, board, phone and parentName are required",
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const studentUser = await User.create({
+      name,
+      email,
+      passwordHash,
+      role: "student",
+      tenantId,
+      status: "active",
+    });
+
+    const studentProfile = await Student.create({
+      tenantId,
+      userId: studentUser._id,
+      rollNumber,
+      classLevel,
+      board,
+      phone,
+      parentName,
+      status: "active",
+    });
+
+    await sendTenantMail(MAIL_TYPES.STUDENT_ADDED, {
+      name: studentUser.name,
+      email:dummyEmail
+      // email: studentUser.email,
+    });
+
+    return res.status(201).json({
+      message: "Student registered successfully",
+      student: {
+        _id: studentUser._id,
+        studentId: studentProfile._id,
+        name: studentUser.name,
+        email: studentUser.email,
+        role: studentUser.role,
+        rollNumber: studentProfile.rollNumber,
+        classLevel: studentProfile.classLevel,
+        board: studentProfile.board,
+        phone: studentProfile.phone,
+        parentName: studentProfile.parentName,
+        status: studentProfile.status,
+      },
+    });
+  } catch (error) {
+    console.error("Student Registration Error:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Get all students for a tenant
+export const getStudentsByTenant = async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+
+    const studentProfiles = await Student.find({ tenantId })
+      .populate("userId", "name email role status createdAt")
+      .sort({ createdAt: -1 });
+
+    const students = studentProfiles
+      .filter((profile) => profile.userId)
+      .map((profile) => ({
+        _id: profile.userId._id,
+        studentId: profile._id,
+        name: profile.userId.name,
+        email: profile.userId.email,
+        role: profile.userId.role,
+        status: profile.status,
+        rollNumber: profile.rollNumber,
+        classLevel: profile.classLevel,
+        board: profile.board,
+        phone: profile.phone,
+        parentName: profile.parentName,
+        createdAt: profile.createdAt,
+      }));
+
+    return res.status(200).json({
+      message: "Students fetched successfully",
+      students,
+    });
+  } catch (error) {
+    console.error("Get Students Error:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Delete a student
+export const deleteStudent = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const tenantId = req.user.tenantId;
+
+    const studentProfile = await Student.findOne({
+      tenantId,
+      $or: [{ _id: studentId }, { userId: studentId }],
+    });
+
+    if (!studentProfile) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    await User.findByIdAndDelete(studentProfile.userId);
+    await Student.findByIdAndDelete(studentProfile._id);
+
+    return res.status(200).json({
+      message: "Student deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete Student Error:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Update a student
+export const updateStudent = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const {
+      name,
+      email,
+      rollNumber,
+      classLevel,
+      board,
+      phone,
+      parentName,
+      status,
+    } = req.body;
+    const tenantId = req.user.tenantId;
+
+    const studentProfile = await Student.findOne({
+      tenantId,
+      $or: [{ _id: studentId }, { userId: studentId }],
+    });
+
+    if (!studentProfile) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+   
+
+    const studentUser = await User.findById(studentProfile.userId);
+    if (!studentUser) {
+      return res.status(404).json({ message: "Student user not found" });
+    }
+
+    if (email && email !== studentUser.email) {
+      const existingUser = await User.findOne({ email });
+      if (
+        existingUser &&
+        existingUser._id.toString() !== studentUser._id.toString()
+      ) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      studentUser.email = email;
+    }
+
+    if (name !== undefined) studentUser.name = name;
+    await studentUser.save();
+
+    if (rollNumber !== undefined) studentProfile.rollNumber = rollNumber;
+    if (classLevel !== undefined) studentProfile.classLevel = classLevel;
+    if (board !== undefined) studentProfile.board = board;
+    if (phone !== undefined) studentProfile.phone = phone;
+    if (parentName !== undefined) studentProfile.parentName = parentName;
+    if (status !== undefined) studentProfile.status = status;
+
+    await studentProfile.save();
+
+    return res.status(200).json({
+      message: "Student updated successfully",
+      student: {
+        _id: studentUser._id,
+        studentId: studentProfile._id,
+        name: studentUser.name,
+        email: studentUser.email,
+        role: studentUser.role,
+        status: studentProfile.status,
+        rollNumber: studentProfile.rollNumber,
+        classLevel: studentProfile.classLevel,
+        board: studentProfile.board,
+        phone: studentProfile.phone,
+        parentName: studentProfile.parentName,
+      },
+    });
+  } catch (error) {
+    console.error("Update Student Error:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+
+
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const {
+      name,
+      email,
+      newPassword,
+      confirmPassword,
+      instituteName,
+    } = req.body;
+    // console.log(instituteName)
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (name) user.name = name;
+    if (email) user.email = email;
+
+    if (req.file) {
+      user.profileImage = `/uploads/${req.file.filename}`;
+    }
+
+    if (newPassword || confirmPassword) {
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({
+          message: "Passwords do not match",
+        });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.passwordHash = await bcrypt.hash(newPassword, salt);
+    }
+
+    await user.save();
+
+    const tenant = await Tenant.findOne({ ownerUserId: userId });
+
+    if (!tenant) {
+      return res.status(404).json({
+        message: "Tenant not found",
+      });
+    }
+
+    if (instituteName) tenant.name = instituteName;
+
+    await tenant.save();
+    console.log(user,tenant)
+
+    res.status(200).json({
+      success: true,
+      message: "Tenant profile updated",
+      user,
+      tenant,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Update failed",
+      error: error.message,
     });
   }
 };

@@ -17,7 +17,7 @@ export const usePendingTenants = (currentPage) => {
     queryFn: () => getAllTenantsApi(currentPage, limit),
     keepPreviousData: true,
   });
-  console.log("API Response:", data);
+  // console.log("API Response:", data);
 
 
   const approveMutation = useMutation({
