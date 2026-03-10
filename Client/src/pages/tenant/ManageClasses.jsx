@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,18 @@ export default function ManageClasses() {
   const [selectedTutor, setSelectedTutor] = useState("");
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [selectedDays, setSelectedDays] = useState([]);
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+  const studentDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (studentDropdownRef.current && !studentDropdownRef.current.contains(e.target)) {
+        setShowStudentDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const isEditMode = Boolean(editingClass);
 
@@ -148,6 +160,7 @@ export default function ManageClasses() {
     setSelectedTutor("");
     setSelectedStudents([]);
     setSelectedDays([]);
+    setShowStudentDropdown(false);
     reset();
   };
 
@@ -210,11 +223,21 @@ export default function ManageClasses() {
               )}
             </div>
 
+            {/* Description */}
+            <div>
+              <Label>Description</Label>
+              <textarea
+                placeholder="e.g. This class covers fundamental algebra concepts..."
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none min-h-[80px]"
+                {...register("description")}
+              />
+            </div>
+
             {/* Tutor Selection */}
             <div>
               <Label>Assign Tutor</Label>
               <Select value={selectedTutor} onValueChange={setSelectedTutor}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 w-full">
                   <SelectValue placeholder="Select a tutor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -230,34 +253,89 @@ export default function ManageClasses() {
             </div>
 
             {/* Student Selection */}
-            <div>
+            <div className="relative" ref={studentDropdownRef}>
               <Label>Enroll Students</Label>
-              <div className="mt-1 border rounded-md p-3 max-h-48 overflow-y-auto space-y-2">
-                {students.length > 0 ? (
-                  students
-                    .filter((s) => s.status === "active")
-                    .map((student) => (
-                      <label
-                        key={student.studentId}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedStudents.includes(student.studentId)}
-                          onChange={() => toggleStudent(student.studentId)}
-                          className="rounded"
-                        />
-                        <span className="text-sm">
-                          {student.name} — {student.rollNumber}
-                        </span>
-                      </label>
-                    ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No students available
-                  </p>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowStudentDropdown((prev) => !prev)}
+                className="mt-1 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm hover:bg-accent focus:outline-none"
+              >
+                <span className="text-muted-foreground">
+                  {selectedStudents.length > 0
+                    ? `${selectedStudents.length} student(s) selected`
+                    : "Select students"}
+                </span>
+                <svg
+                  className={`h-4 w-4 transition-transform ${showStudentDropdown ? "rotate-180" : ""}`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+
+              {showStudentDropdown && (
+                <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
+                  {(() => {
+                    const activeStudents = students.filter((s) => s.status === "active");
+                    const allSelected =
+                      activeStudents.length > 0 &&
+                      activeStudents.every((s) => selectedStudents.includes(s.studentId));
+                    return (
+                      <>
+                        {activeStudents.length > 0 && (
+                          <div className="border-b px-2 py-1.5">
+                            <label className="flex items-center gap-2 cursor-pointer rounded px-2 py-1 hover:bg-accent text-sm font-medium">
+                              <input
+                                type="checkbox"
+                                checked={allSelected}
+                                onChange={() => {
+                                  if (allSelected) {
+                                    setSelectedStudents([]);
+                                  } else {
+                                    setSelectedStudents(activeStudents.map((s) => s.studentId));
+                                  }
+                                }}
+                                className="rounded"
+                              />
+                              <span>Select All</span>
+                            </label>
+                          </div>
+                        )}
+                        <div className="max-h-48 overflow-y-auto p-2 space-y-1">
+                          {activeStudents.length > 0 ? (
+                            activeStudents.map((student) => (
+                              <label
+                                key={student.studentId}
+                                className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-accent text-sm"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedStudents.includes(student.studentId)}
+                                  onChange={() => toggleStudent(student.studentId)}
+                                  className="rounded"
+                                />
+                                <span>
+                                  {student.name} — {student.rollNumber}
+                                </span>
+                              </label>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground px-2 py-1.5">
+                              No students available
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
 
             {/* Schedule Days */}

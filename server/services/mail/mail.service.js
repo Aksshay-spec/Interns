@@ -11,6 +11,8 @@ import { tenantInactiveTemplate } from "../../templates/tenantInactive.template.
 import { tenantBlockedTemplate } from "../../templates/tenantBlocked.template.js";
 import { tutorAddedTemplate } from "../../templates/tutorAdded.template.js";
 import { studentAddedTemplate } from "../../templates/studentAdded.template.js";
+import { classAssignedTutorTemplate } from "../../templates/classAssignedTutor.template.js";
+import { classAssignedStudentTemplate } from "../../templates/classAssignedStudent.template.js";
 import { passwordResetTemplate } from "../../templates/passwordReset.template.js";
 
 export const sendTenantMail = async (type, tenant, options = {}) => {
@@ -55,6 +57,16 @@ export const sendTenantMail = async (type, tenant, options = {}) => {
 
       case MAIL_TYPES.STUDENT_ADDED:
         mailData = studentAddedTemplate(tenant);
+        recipient = tenant.email;
+        break;
+
+      case MAIL_TYPES.CLASS_ASSIGNED_TUTOR:
+        mailData = classAssignedTutorTemplate(tenant);
+        recipient = tenant.email;
+        break;
+
+      case MAIL_TYPES.CLASS_ASSIGNED_STUDENT:
+        mailData = classAssignedStudentTemplate(tenant);
         recipient = tenant.email;
         break;
 

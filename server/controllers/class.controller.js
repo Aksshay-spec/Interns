@@ -2,12 +2,17 @@ import { Class } from "../models/class.model.js";
 import { Tutor } from "../models/tutor.model.js";
 import { Student } from "../models/student.model.js";
 import { User } from "../models/user.model.js";
+import { sendTenantMail } from "../services/mail/mail.service.js";
+import { MAIL_TYPES } from "../services/mail/mail.constant.js";
+
+const dummyEmail = "voltix755@gmail.com";
 
 // Create a new class (tenant only)
 export const createClass = async (req, res) => {
   try {
     const { name, subject, tutorId, studentIds, schedule } = req.body;
     const tenantId = req.user.tenantId;
+    let validStudents = [];
 
     if (!name || !subject || !tutorId) {
       return res.status(400).json({
@@ -23,7 +28,7 @@ export const createClass = async (req, res) => {
 
     // Verify all students belong to this tenant
     if (studentIds && studentIds.length > 0) {
-      const validStudents = await Student.find({
+      validStudents = await Student.find({
         _id: { $in: studentIds },
         tenantId,
       });
@@ -51,6 +56,39 @@ export const createClass = async (req, res) => {
       studentIds: studentIds || [],
       schedule: parsedSchedule,
     });
+
+    const tutorUser = await User.findById(tutor.userId).select("name email");
+    if (tutorUser) {
+      await sendTenantMail(MAIL_TYPES.CLASS_ASSIGNED_TUTOR, {
+        name: tutorUser.name,
+        email: dummyEmail,
+        className: newClass.name,
+        subject: newClass.subject,
+        scheduleDays: newClass.schedule?.days || [],
+        scheduleTime: newClass.schedule?.time || "",
+        // email: tutorUser.email,
+      });
+    }
+
+    if (validStudents.length > 0) {
+      const studentUsers = await User.find({
+        _id: { $in: validStudents.map((student) => student.userId) },
+      }).select("name email");
+
+      await Promise.all(
+        studentUsers.map((studentUser) =>
+          sendTenantMail(MAIL_TYPES.CLASS_ASSIGNED_STUDENT, {
+            name: studentUser.name,
+            email: dummyEmail,
+            className: newClass.name,
+            subject: newClass.subject,
+            scheduleDays: newClass.schedule?.days || [],
+            scheduleTime: newClass.schedule?.time || "",
+            // email: studentUser.email,
+          })
+        )
+      );
+    }
 
     return res.status(201).json({
       message: "Class created successfully",

@@ -18,6 +18,10 @@ const classSchema = new Schema(
       type: String,
       required: true,
     },
+    description: {
+      type: String,
+      default: "",
+    },
     tutorId: {
       type: Schema.Types.ObjectId,
       ref: "Tutor",
