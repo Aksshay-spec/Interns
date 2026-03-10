@@ -245,11 +245,7 @@ export const resetPassword = async (req, res) => {
     const { password } = req.body;
 
 
-    // const hashedToken = await bcrypt.hash(token, 10); 
-    // const hashedToken = crypto
-    //   .createHash("sha256")
-    //   .update(token)
-    //   .digest("hex");
+ 
 
     //  console.log("reset : " , hashedToken)
     const user = await User.findOne({
