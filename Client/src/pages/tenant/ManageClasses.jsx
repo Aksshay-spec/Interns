@@ -119,6 +119,7 @@ export default function ManageClasses() {
       name: data.name,
       subject: data.subject,
       tutorId: selectedTutor,
+      description: data.description,
       studentIds: selectedStudents,
       schedule: {
         days: selectedDay,

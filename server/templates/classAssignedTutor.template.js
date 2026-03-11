@@ -1,8 +1,9 @@
-const formatSchedule = (days = [], time = "") => {
-  const dayText = Array.isArray(days) && days.length > 0 ? days.join(", ") : "Not specified";
-  const timeText = time || "Not specified";
+const formatSchedule = (days = "", time = "") => {
+  const dayText = days;
+  const timeText = time;
   return `${dayText} at ${timeText}`;
 };
+
 
 export const classAssignedTutorTemplate = (user) => ({
   subject: `New Class Assigned: ${user.className || "Class"}`,
@@ -21,6 +22,7 @@ export const classAssignedTutorTemplate = (user) => ({
               <td style="padding:24px;color:#1f2937;font-size:14px;line-height:1.7;">
                 <p style="margin:0 0 14px;">Hello ${user.name || "Tutor"},</p>
                 <p style="margin:0 0 14px;">A new class has been assigned to you.</p>
+                <p style="margin:0 0 8px;"><strong>Role:</strong> Tutor</p>
                 <p style="margin:0 0 8px;"><strong>Class:</strong> ${user.className || "N/A"}</p>
                 <p style="margin:0 0 8px;"><strong>Subject:</strong> ${user.subject || "N/A"}</p>
                 <p style="margin:0 0 14px;"><strong>Schedule:</strong> ${formatSchedule(user.scheduleDays, user.scheduleTime)}</p>

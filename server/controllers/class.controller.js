@@ -10,7 +10,7 @@ const dummyEmail = "voltix755@gmail.com";
 // Create a new class (tenant only)
 export const createClass = async (req, res) => {
   try {
-    const { name, subject, tutorId, studentIds, schedule } = req.body;
+    const { name, subject, tutorId, studentIds, schedule, description } = req.body;
     const tenantId = req.user.tenantId;
     let validStudents = [];
 
@@ -54,7 +54,9 @@ export const createClass = async (req, res) => {
       tutorId,
       studentIds: studentIds || [],
       schedule: parsedSchedule,
+      description,
     });
+    console.log(parsedSchedule)
 
     const tutorUser = await User.findById(tutor.userId).select("name email");
     if (tutorUser) {

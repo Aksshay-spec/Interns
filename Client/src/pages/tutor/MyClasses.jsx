@@ -12,6 +12,7 @@ import { useGetMyClasses } from "@/hooks/tutor/useGetMyClasses";
 export default function MyClasses() {
   const { data: classesData, isLoading } = useGetMyClasses();
   const classes = classesData?.classes || [];
+  // console.log(classes)
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8">
@@ -30,6 +31,7 @@ export default function MyClasses() {
                   <TableRow>
                     <TableHead>Class Name</TableHead>
                     <TableHead>Subject</TableHead>
+                    <TableHead>Description</TableHead>
                     <TableHead>Students</TableHead>
                     <TableHead>Schedule</TableHead>
                     <TableHead>Status</TableHead>
@@ -45,6 +47,11 @@ export default function MyClasses() {
                         </TableCell>
                         <TableCell>{cls.subject}</TableCell>
                         <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {cls.description || "-"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
                           <div className="text-sm space-y-1">
                             {cls.studentIds?.length > 0
                               ? cls.studentIds.map((s) => (
@@ -57,7 +64,7 @@ export default function MyClasses() {
                         </TableCell>
                         <TableCell>
                           <div className="text-xs">
-                            <div>{cls.schedule?.days?.join(", ") || "-"}</div>
+                            <div>{cls.schedule?.days|| "-"}</div>
                             <div className="text-muted-foreground">
                               {cls.schedule?.time || "-"}
                             </div>
@@ -80,7 +87,7 @@ export default function MyClasses() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-sm">
+                      <TableCell colSpan={6} className="text-center text-sm">
                         No classes assigned
                       </TableCell>
                     </TableRow>
