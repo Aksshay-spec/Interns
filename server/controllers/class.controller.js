@@ -40,11 +40,10 @@ export const createClass = async (req, res) => {
     }
 
     const parsedSchedule = {
-      days: Array.isArray(schedule?.days)
-        ? schedule.days
-        : typeof schedule?.days === "string"
-          ? schedule.days.split(",").map((d) => d.trim()).filter(Boolean)
-          : [],
+      days:
+        typeof schedule?.days === "string"
+          ? schedule.days.trim()
+          : "",
       time: schedule?.time || "",
     };
 
@@ -64,7 +63,7 @@ export const createClass = async (req, res) => {
         email: dummyEmail,
         className: newClass.name,
         subject: newClass.subject,
-        scheduleDays: newClass.schedule?.days || [],
+        scheduleDays: newClass.schedule?.days || "",
         scheduleTime: newClass.schedule?.time || "",
         // email: tutorUser.email,
       });
@@ -82,7 +81,7 @@ export const createClass = async (req, res) => {
             email: dummyEmail,
             className: newClass.name,
             subject: newClass.subject,
-            scheduleDays: newClass.schedule?.days || [],
+            scheduleDays: newClass.schedule?.days || "",
             scheduleTime: newClass.schedule?.time || "",
             // email: studentUser.email,
           })
@@ -169,10 +168,9 @@ export const updateClass = async (req, res) => {
 
     if (schedule !== undefined) {
       classDoc.schedule = {
-        days: Array.isArray(schedule?.days)
-          ? schedule.days
-          : typeof schedule?.days === "string"
-            ? schedule.days.split(",").map((d) => d.trim()).filter(Boolean)
+        days:
+          typeof schedule?.days === "string"
+            ? schedule.days.trim()
             : classDoc.schedule.days,
         time: schedule?.time ?? classDoc.schedule.time,
       };

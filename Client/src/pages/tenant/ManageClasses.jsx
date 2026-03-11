@@ -30,6 +30,13 @@ import { useUpdateClass } from "@/hooks/tenant/useUpdateClass";
 import { useGetTutors } from "@/hooks/tenant/useGetTutors";
 import { useGetStudents } from "@/hooks/tenant/useGetStudents";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import toast from "react-hot-toast";
 
 const DAYS_OF_WEEK = [
@@ -53,13 +60,16 @@ export default function ManageClasses() {
   const [editingClass, setEditingClass] = useState(null);
   const [selectedTutor, setSelectedTutor] = useState("");
   const [selectedStudents, setSelectedStudents] = useState([]);
-  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedDay, setSelectedDay] = useState("");
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const studentDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (studentDropdownRef.current && !studentDropdownRef.current.contains(e.target)) {
+      if (
+        studentDropdownRef.current &&
+        !studentDropdownRef.current.contains(e.target)
+      ) {
         setShowStudentDropdown(false);
       }
     };
@@ -91,17 +101,11 @@ export default function ManageClasses() {
     });
   };
 
-  const toggleDay = (day) => {
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    );
-  };
-
   const toggleStudent = (studentId) => {
     setSelectedStudents((prev) =>
       prev.includes(studentId)
         ? prev.filter((id) => id !== studentId)
-        : [...prev, studentId]
+        : [...prev, studentId],
     );
   };
 
@@ -117,7 +121,7 @@ export default function ManageClasses() {
       tutorId: selectedTutor,
       studentIds: selectedStudents,
       schedule: {
-        days: selectedDays,
+        days: selectedDay,
         time: data.time || "",
       },
     };
@@ -152,14 +156,14 @@ export default function ManageClasses() {
     setValue("status", cls.status || "active");
     setSelectedTutor(cls.tutorId?._id || "");
     setSelectedStudents(cls.studentIds?.map((s) => s._id) || []);
-    setSelectedDays(cls.schedule?.days || []);
+    setSelectedDay(cls.schedule?.days || "");
   };
 
   const handleCancelEdit = () => {
     setEditingClass(null);
     setSelectedTutor("");
     setSelectedStudents([]);
-    setSelectedDays([]);
+    setSelectedDay("");
     setShowStudentDropdown(false);
     reset();
   };
@@ -282,10 +286,14 @@ export default function ManageClasses() {
               {showStudentDropdown && (
                 <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
                   {(() => {
-                    const activeStudents = students.filter((s) => s.status === "active");
+                    const activeStudents = students.filter(
+                      (s) => s.status === "active",
+                    );
                     const allSelected =
                       activeStudents.length > 0 &&
-                      activeStudents.every((s) => selectedStudents.includes(s.studentId));
+                      activeStudents.every((s) =>
+                        selectedStudents.includes(s.studentId),
+                      );
                     return (
                       <>
                         {activeStudents.length > 0 && (
@@ -298,7 +306,9 @@ export default function ManageClasses() {
                                   if (allSelected) {
                                     setSelectedStudents([]);
                                   } else {
-                                    setSelectedStudents(activeStudents.map((s) => s.studentId));
+                                    setSelectedStudents(
+                                      activeStudents.map((s) => s.studentId),
+                                    );
                                   }
                                 }}
                                 className="rounded"
@@ -316,8 +326,12 @@ export default function ManageClasses() {
                               >
                                 <input
                                   type="checkbox"
-                                  checked={selectedStudents.includes(student.studentId)}
-                                  onChange={() => toggleStudent(student.studentId)}
+                                  checked={selectedStudents.includes(
+                                    student.studentId,
+                                  )}
+                                  onChange={() =>
+                                    toggleStudent(student.studentId)
+                                  }
                                   className="rounded"
                                 />
                                 <span>
@@ -338,27 +352,21 @@ export default function ManageClasses() {
               )}
             </div>
 
-            {/* Schedule Days */}
+            {/* Schedule Day */}
             <div>
-              <Label>Schedule Days</Label>
-              <div className="mt-1 flex flex-wrap gap-2">
-                {DAYS_OF_WEEK.map((day) => (
-                  <Button
-                    key={day}
-                    type="button"
-                    size="sm"
-                    variant={selectedDays.includes(day) ? "default" : "outline"}
-                    onClick={() => toggleDay(day)}
-                    className={
-                      selectedDays.includes(day)
-                        ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                        : ""
-                    }
-                  >
-                    {day}
-                  </Button>
-                ))}
-              </div>
+              <Label>Schedule Day</Label>
+              <Select value={selectedDay} onValueChange={setSelectedDay}>
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder="Select day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS_OF_WEEK.map((day) => (
+                    <SelectItem key={day} value={day}>
+                      {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Schedule Time */}
@@ -434,11 +442,31 @@ export default function ManageClasses() {
                         <TableCell>{cls.subject}</TableCell>
                         <TableCell>{getTutorName(cls.tutorId)}</TableCell>
                         <TableCell>
-                          {cls.studentIds?.length || 0} enrolled
+                          {cls.studentIds && cls.studentIds.length > 0 ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="outline">
+                                  {cls.studentIds.length} Students
+                                </Button>
+                              </DropdownMenuTrigger>
+
+                              <DropdownMenuContent className="w-48">
+                                {cls.studentIds.map((student) => (
+                                  <DropdownMenuItem key={student._id}>
+                                    {student.userId?.name || "Unknown"}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">
+                              No students
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="text-xs">
-                            <div>{cls.schedule?.days?.join(", ") || "-"}</div>
+                            <div>{cls.schedule?.days || "-"}</div>
                             <div className="text-muted-foreground">
                               {cls.schedule?.time || "-"}
                             </div>

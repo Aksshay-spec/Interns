@@ -34,7 +34,10 @@ const classSchema = new Schema(
       },
     ],
     schedule: {
-      days: [String],
+      days: {
+        type: String,
+        required: true,
+      },
       time: String,
     },
     status: {
