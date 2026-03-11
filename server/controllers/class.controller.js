@@ -131,7 +131,7 @@ export const getClassesByTenant = async (req, res) => {
 export const updateClass = async (req, res) => {
   try {
     const { classId } = req.params;
-    const { name, subject, tutorId, studentIds, schedule, status } = req.body;
+    const { name, subject, tutorId, studentIds, schedule, status, description } = req.body;
     const tenantId = req.user.tenantId;
 
     const classDoc = await Class.findOne({ _id: classId, tenantId });
@@ -167,6 +167,7 @@ export const updateClass = async (req, res) => {
     if (name !== undefined) classDoc.name = name;
     if (subject !== undefined) classDoc.subject = subject;
     if (status !== undefined) classDoc.status = status;
+    if (description !== undefined) classDoc.description = description;
 
     if (schedule !== undefined) {
       classDoc.schedule = {
@@ -179,6 +180,40 @@ export const updateClass = async (req, res) => {
     }
 
     await classDoc.save();
+
+    // Send update notification emails
+    const tutor = await Tutor.findById(classDoc.tutorId);
+    const tutorUser = await User.findById(tutor?.userId).select("name email");
+    if (tutorUser) {
+      await sendTenantMail(MAIL_TYPES.CLASS_ASSIGNED_TUTOR, {
+        name: tutorUser.name,
+        email: dummyEmail,
+        className: classDoc.name,
+        subject: classDoc.subject,
+        scheduleDays: classDoc.schedule?.days || "",
+        scheduleTime: classDoc.schedule?.time || "",
+      });
+    }
+
+    if (classDoc.studentIds && classDoc.studentIds.length > 0) {
+      const students = await Student.find({ _id: { $in: classDoc.studentIds } });
+      const studentUsers = await User.find({
+        _id: { $in: students.map((s) => s.userId) },
+      }).select("name email");
+
+      await Promise.all(
+        studentUsers.map((studentUser) =>
+          sendTenantMail(MAIL_TYPES.CLASS_ASSIGNED_STUDENT, {
+            name: studentUser.name,
+            email: dummyEmail,
+            className: classDoc.name,
+            subject: classDoc.subject,
+            scheduleDays: classDoc.schedule?.days || "",
+            scheduleTime: classDoc.schedule?.time || "",
+          })
+        )
+      );
+    }
 
     return res.status(200).json({
       message: "Class updated successfully",
