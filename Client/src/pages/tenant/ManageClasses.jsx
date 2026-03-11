@@ -436,11 +436,11 @@ export default function ManageClasses() {
                   {classes.length > 0 ? (
                     classes.map((cls) => (
                       <TableRow key={cls._id}>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium capitalize">
                           {cls.name}
                         </TableCell>
-                        <TableCell>{cls.subject}</TableCell>
-                        <TableCell>{getTutorName(cls.tutorId)}</TableCell>
+                        <TableCell className="capitalize">{cls.subject}</TableCell>
+                        <TableCell className="capitalize">{getTutorName(cls.tutorId)}</TableCell>
                         <TableCell>
                           {cls.studentIds && cls.studentIds.length > 0 ? (
                             <DropdownMenu>
