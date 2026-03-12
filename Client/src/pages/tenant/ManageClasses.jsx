@@ -44,6 +44,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
 import toast from "react-hot-toast";
 
@@ -82,7 +83,7 @@ export default function ManageClasses() {
   const { mutateAsync: createClass, isPending: isCreating } = useCreateClass();
   const { mutateAsync: updateClass, isPending: isUpdating } = useUpdateClass();
   const { data: classesData, isLoading } = useGetClasses();
-  const { mutate: deleteClass } = useDeleteClass();
+  const { mutate: deleteClass, isPending: isDeleting } = useDeleteClass();
   const { data: tutorsData } = useGetTutors();
   const { data: studentsData } = useGetStudents();
 
@@ -92,6 +93,7 @@ export default function ManageClasses() {
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const [showDateDetailsModal, setShowDateDetailsModal] = useState(false);
   const [selectedModalDate, setSelectedModalDate] = useState("");
+  const [deleteClassId, setDeleteClassId] = useState(null);
   const studentDropdownRef = useRef(null);
 
   useEffect(() => {
@@ -132,11 +134,16 @@ export default function ManageClasses() {
   const classes = classesData?.classes || [];
 
   const handleDelete = (id) => {
-    if (!window.confirm("Are you sure you want to delete this class?")) return;
+    setDeleteClassId(id);
+  };
 
-    deleteClass(id, {
+  const confirmDelete = () => {
+    if (!deleteClassId) return;
+
+    deleteClass(deleteClassId, {
       onSuccess: () => {
         toast.success("Class deleted successfully!");
+        setDeleteClassId(null);
       },
     });
   };
@@ -712,6 +719,18 @@ export default function ManageClasses() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmActionDialog
+        open={Boolean(deleteClassId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteClassId(null);
+        }}
+        title="Delete class?"
+        description="This will permanently remove the class and cannot be undone."
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+        isConfirming={isDeleting}
+      />
     </div>
   );
 }

@@ -28,9 +28,12 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
 export default function Tenants() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [selectedTenantId, setSelectedTenantId] = useState(null);
 
   const {
     tenants,
@@ -42,6 +45,52 @@ export default function Tenants() {
     handleInactive,
     isActionLoading,
   } = usePendingTenants(currentPage);
+
+  const openConfirmDialog = (tenantId, action) => {
+    setSelectedTenantId(tenantId);
+    setPendingAction(action);
+  };
+
+  const closeConfirmDialog = () => {
+    setSelectedTenantId(null);
+    setPendingAction(null);
+  };
+
+  const confirmAction = () => {
+    if (!selectedTenantId || !pendingAction) return;
+
+    if (pendingAction === "approve") {
+      handleApprove(selectedTenantId);
+    }
+    if (pendingAction === "inactive") {
+      handleInactive(selectedTenantId);
+    }
+    if (pendingAction === "block") {
+      handleBlock(selectedTenantId);
+    }
+
+    closeConfirmDialog();
+  };
+
+  const confirmCopy = {
+    approve: {
+      title: "Approve tenant?",
+      description: "This will activate the tenant account and allow dashboard access.",
+      confirmText: "Approve",
+    },
+    inactive: {
+      title: "Mark tenant as inactive?",
+      description: "The tenant account will be disabled until reactivated.",
+      confirmText: "Mark Inactive",
+    },
+    block: {
+      title: "Block tenant?",
+      description: "This will block the tenant account and restrict access immediately.",
+      confirmText: "Block",
+    },
+  };
+
+  const activeConfirm = pendingAction ? confirmCopy[pendingAction] : null;
   
 
   if (isLoading) return <Loader />;
@@ -131,18 +180,18 @@ export default function Tenants() {
 
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => handleApprove(tenant._id)}
+                                onClick={() => openConfirmDialog(tenant._id, "approve")}
                               >
                                 Approve
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleInactive(tenant._id)}
+                                onClick={() => openConfirmDialog(tenant._id, "inactive")}
                               >
                                 Inactive
                               </DropdownMenuItem>
 
                               <DropdownMenuItem
-                                onClick={() => handleBlock(tenant._id)}
+                                onClick={() => openConfirmDialog(tenant._id, "block")}
                                 className="text-red-600"
                               >
                                 Block
@@ -215,6 +264,18 @@ export default function Tenants() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmActionDialog
+        open={Boolean(selectedTenantId && pendingAction)}
+        onOpenChange={(open) => {
+          if (!open) closeConfirmDialog();
+        }}
+        title={activeConfirm?.title}
+        description={activeConfirm?.description}
+        confirmText={activeConfirm?.confirmText}
+        onConfirm={confirmAction}
+        isConfirming={isActionLoading}
+      />
     </div>
   );
 }

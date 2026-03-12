@@ -25,6 +25,7 @@ import { useRegisterStudent } from "@/hooks/tenant/useRegisterStudent";
 import { useGetStudents } from "@/hooks/tenant/useGetStudents";
 import { useDeleteStudent } from "@/hooks/tenant/useDeleteStudent";
 import { useUpdateStudent } from "@/hooks/tenant/useUpdateStudent";
+import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
 import toast from "react-hot-toast";
 
@@ -34,8 +35,9 @@ export default function AddStudent() {
   const { mutateAsync: updateStudent, isPending: isUpdating } =
     useUpdateStudent();
   const { data: students, isLoading } = useGetStudents();
-  const { mutate: deleteStudent } = useDeleteStudent();
+  const { mutate: deleteStudent, isPending: isDeleting } = useDeleteStudent();
   const [editingStudent, setEditingStudent] = useState(null);
+  const [deleteStudentId, setDeleteStudentId] = useState(null);
   const isEditMode = Boolean(editingStudent);
 
   const {
@@ -47,12 +49,16 @@ export default function AddStudent() {
   } = useForm();
 
   const handleDelete = (id) => {
-    if (!window.confirm("Are you sure you want to delete this student?"))
-      return;
+    setDeleteStudentId(id);
+  };
 
-    deleteStudent(id, {
+  const confirmDelete = () => {
+    if (!deleteStudentId) return;
+
+    deleteStudent(deleteStudentId, {
       onSuccess: () => {
         toast.success("Student deleted successfully!");
+        setDeleteStudentId(null);
       },
     });
   };
@@ -384,6 +390,18 @@ export default function AddStudent() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmActionDialog
+        open={Boolean(deleteStudentId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteStudentId(null);
+        }}
+        title="Delete student?"
+        description="This will permanently remove the student from your dashboard."
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+        isConfirming={isDeleting}
+      />
     </div>
   );
 }

@@ -25,6 +25,7 @@ import { useRegisterTutor } from "@/hooks/tenant/useRegisterTutor";
 import { useGetTutors } from "@/hooks/tenant/useGetTutors";
 import { useDeleteTutor } from "@/hooks/tenant/useDeleteTutor";
 import { useUpdateTutor } from "@/hooks/tenant/useUpdateTutor";
+import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
 import toast from "react-hot-toast";
 
@@ -34,8 +35,9 @@ export default function AddTutor() {
   const { mutateAsync: updateTutor, isPending: isUpdating } = useUpdateTutor();
   const { data: tutors, isLoading } = useGetTutors();
   console.log("Tutors:", tutors);
-  const { mutate: deleteTutor } = useDeleteTutor();
+  const { mutate: deleteTutor, isPending: isDeleting } = useDeleteTutor();
   const [editingTutor, setEditingTutor] = useState(null);
+  const [deleteTutorId, setDeleteTutorId] = useState(null);
   const isEditMode = Boolean(editingTutor);
 
   const {
@@ -47,11 +49,16 @@ export default function AddTutor() {
   } = useForm();
 
   const handleDelete = (id) => {
-    if (!window.confirm("Are you sure you want to delete this tutor?")) return;
+    setDeleteTutorId(id);
+  };
 
-    deleteTutor(id, {
+  const confirmDelete = () => {
+    if (!deleteTutorId) return;
+
+    deleteTutor(deleteTutorId, {
       onSuccess: () => {
         toast.success("Tutor deleted successfully!");
+        setDeleteTutorId(null);
       },
     });
   };
@@ -364,6 +371,18 @@ export default function AddTutor() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmActionDialog
+        open={Boolean(deleteTutorId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTutorId(null);
+        }}
+        title="Delete tutor?"
+        description="This will permanently remove the tutor from your dashboard."
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+        isConfirming={isDeleting}
+      />
     </div>
   );
 }

@@ -54,20 +54,14 @@ export const usePendingTenants = (currentPage) => {
   });
 
   const handleApprove = (tenantId) => {
-    if (window.confirm("Are you sure you want to approve this tenant?")) {
-      approveMutation.mutate(tenantId);
-    }
+    approveMutation.mutate(tenantId);
   };
   const handleInactive = (tenantId) => {
-    if (window.confirm("Are you sure you want to mark this tenant as inactive?")) {
-      inactiveMutation.mutate(tenantId);
-    }
+    inactiveMutation.mutate(tenantId);
   };
 
   const handleBlock = (tenantId) => {
-    if (window.confirm("Are you sure you want to block this tenant?")) {
-      blockMutation.mutate(tenantId);
-    }
+    blockMutation.mutate(tenantId);
   };
 
   const isLoading_ = approveMutation.isPending || inactiveMutation.isPending || blockMutation.isPending;
