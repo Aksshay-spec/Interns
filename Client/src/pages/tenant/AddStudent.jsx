@@ -27,7 +27,7 @@ import { useDeleteStudent } from "@/hooks/tenant/useDeleteStudent";
 import { useUpdateStudent } from "@/hooks/tenant/useUpdateStudent";
 import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function AddStudent() {
   const { mutateAsync: createStudent, isPending: isCreating } =

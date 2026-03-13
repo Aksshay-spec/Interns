@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const formatTime12h = (time24) => {
   if (!time24) return "";
@@ -95,6 +95,7 @@ export default function ManageClasses() {
   const [selectedModalDate, setSelectedModalDate] = useState("");
   const [deleteClassId, setDeleteClassId] = useState(null);
   const studentDropdownRef = useRef(null);
+  const [lastDialogDate, setLastDialogDate] = useState(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -119,13 +120,14 @@ export default function ManageClasses() {
     watch,
     formState: { errors },
   } = useForm();
-
   const scheduleDateValue = watch("scheduleDate");
 
   useEffect(() => {
-    if (scheduleDateValue && !isEditMode) {
+    if (!scheduleDateValue || isEditMode) return;
+    if (scheduleDateValue !== lastDialogDate) {
       setSelectedModalDate(scheduleDateValue);
       setShowDateDetailsModal(true);
+      setLastDialogDate(scheduleDateValue);
     }
   }, [scheduleDateValue]);
 
@@ -244,20 +246,20 @@ export default function ManageClasses() {
     return tutorField?.userId?.name || "Unknown";
   };
 
-
-
   const getClassesForDate = (dateStr) => {
     if (!dateStr) return [];
-    
+
     // Extract day of week from date string (e.g., "2026-03-11" -> "Wednesday")
     const selectedDate = new Date(dateStr + "T00:00:00");
-    const selectedDayOfWeek = selectedDate.toLocaleDateString("en-US", { weekday: "long" });
-    
+    const selectedDayOfWeek = selectedDate.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+
     // Match both old format (day names) and new format (date strings)
     return classes.filter((cls) => {
       const scheduledDays = cls.schedule?.days?.trim().toLowerCase() || "";
       const selectedDay = selectedDayOfWeek.toLowerCase();
-      
+
       return (
         scheduledDays === selectedDay ||
         scheduledDays === dateStr ||
@@ -427,7 +429,22 @@ export default function ManageClasses() {
               <Input
                 type="date"
                 className="mt-1 cursor-pointer"
-                {...register("scheduleDate", { required: "Schedule date is required" })}
+                {...register("scheduleDate", {
+                  required: "Schedule date is required",
+                })}
+                onClick={(e) => {
+                  // Clear the value so picking the same date fires onChange
+                  e.target.value = "";
+                  setValue("scheduleDate", "");
+                }}
+                onChange={(e) => {
+                  const date = e.target.value;
+                  setValue("scheduleDate", date);
+                  if (!isEditMode && date) {
+                    setSelectedModalDate(date);
+                    setShowDateDetailsModal(true);
+                  }
+                }}
               />
               {errors.scheduleDate && (
                 <p className="text-xs text-red-500 mt-1">
@@ -443,7 +460,9 @@ export default function ManageClasses() {
                 <Input
                   type="time"
                   className="mt-1"
-                  {...register("startTime", { required: "Start time is required" })}
+                  {...register("startTime", {
+                    required: "Start time is required",
+                  })}
                 />
                 {errors.startTime && (
                   <p className="text-xs text-red-500 mt-1">
@@ -526,8 +545,12 @@ export default function ManageClasses() {
                         <TableCell className="font-medium capitalize">
                           {cls.name}
                         </TableCell>
-                        <TableCell className="capitalize">{cls.subject}</TableCell>
-                        <TableCell className="capitalize">{getTutorName(cls.tutorId)}</TableCell>
+                        <TableCell className="capitalize">
+                          {cls.subject}
+                        </TableCell>
+                        <TableCell className="capitalize">
+                          {getTutorName(cls.tutorId)}
+                        </TableCell>
                         <TableCell>
                           {cls.studentIds && cls.studentIds.length > 0 ? (
                             <DropdownMenu>
@@ -630,11 +653,17 @@ export default function ManageClasses() {
       </Card>
 
       {/* Date Details Modal */}
-      <Dialog open={showDateDetailsModal} onOpenChange={setShowDateDetailsModal}>
+      <Dialog
+        open={showDateDetailsModal}
+        onOpenChange={setShowDateDetailsModal}
+      >
         <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle>
-              Classes on {selectedModalDate ? formatDateWithDay(selectedModalDate) : "Selected Date"}
+              Classes on{" "}
+              {selectedModalDate
+                ? formatDateWithDay(selectedModalDate)
+                : "Selected Date"}
             </DialogTitle>
             <DialogClose />
           </DialogHeader>
@@ -656,9 +685,15 @@ export default function ManageClasses() {
                 <TableBody>
                   {getClassesForDate(selectedModalDate).map((cls) => (
                     <TableRow key={cls._id}>
-                      <TableCell className="font-medium capitalize">{cls.name}</TableCell>
-                      <TableCell className="capitalize">{cls.subject}</TableCell>
-                      <TableCell className="capitalize">{getTutorName(cls.tutorId)}</TableCell>
+                      <TableCell className="font-medium capitalize">
+                        {cls.name}
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        {cls.subject}
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        {getTutorName(cls.tutorId)}
+                      </TableCell>
                       <TableCell>{cls.schedule?.time || "-"}</TableCell>
                       <TableCell>
                         {cls.studentIds && cls.studentIds.length > 0 ? (
@@ -677,7 +712,9 @@ export default function ManageClasses() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         ) : (
-                          <span className="text-muted-foreground text-sm">No students</span>
+                          <span className="text-muted-foreground text-sm">
+                            No students
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>

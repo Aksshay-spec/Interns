@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useLogOut } from "@/hooks/auth/useAuthMutations";
-import toast from "react-hot-toast"
+import { toast } from "sonner";
 
 const AuthContext = createContext(null);
 

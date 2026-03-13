@@ -27,7 +27,7 @@ import { useDeleteTutor } from "@/hooks/tenant/useDeleteTutor";
 import { useUpdateTutor } from "@/hooks/tenant/useUpdateTutor";
 import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function AddTutor() {
   const { mutateAsync: createTutor, isPending: isCreating } =
