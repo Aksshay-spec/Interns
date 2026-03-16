@@ -41,9 +41,17 @@ const TenantDashboard = () => {
     (cls) => cls.schedule?.days === formattedDate,
   );
 
-  // Tomorrow date
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  // Normalize dates so comparisons only use day/month/year (ignore time)
+  const normalizeDate = (date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  const today = normalizeDate(new Date());
+  const selectedDay = selectedDate ? normalizeDate(selectedDate) : null;
+
+  const isSelectedDate = (date) => {
+    if (!selectedDay) return false;
+    return normalizeDate(date).getTime() === selectedDay.getTime();
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -59,17 +67,26 @@ const TenantDashboard = () => {
           <CardContent className="flex justify-center">
             <Calendar
               mode="single"
-              selected={selectedDate}
               onSelect={(date) => {
                 if (!date) return;
                 setSelectedDate(date);
                 setOpenDialog(true);
               }}
               modifiers={{
-                tomorrow: tomorrow,
+                todayDefault: (date) =>
+                  normalizeDate(date).getTime() === today.getTime(),
+                selectedPast: (date) =>
+                  isSelectedDate(date) && normalizeDate(date) < today,
+                selectedFuture: (date) =>
+                  isSelectedDate(date) && normalizeDate(date) > today,
               }}
               modifiersClassNames={{
-                tomorrow: "border-2 rounded-md border-yellow-400",
+                todayDefault:
+                  "bg-green-600 text-white rounded-md hover:bg-green-700 hover:text-white",
+                selectedPast:
+                  "bg-zinc-200 text-zinc-700 rounded-md hover:bg-zinc-300",
+                selectedFuture:
+                  "bg-yellow-300 text-yellow-950 rounded-md hover:bg-yellow-400",
               }}
             />
           </CardContent>
