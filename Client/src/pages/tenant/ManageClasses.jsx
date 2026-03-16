@@ -36,48 +36,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-} from "@/components/ui/dialog";
 import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
 import { toast } from "sonner";
 
-const formatTime12h = (time24) => {
-  if (!time24) return "";
-  const [hours, minutes] = time24.split(":").map(Number);
-  const period = hours >= 12 ? "PM" : "AM";
-  const hours12 = hours % 12 || 12;
-  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
-};
-
-const parseTime12to24 = (time12) => {
-  if (!time12) return "";
-  const match = time12.match(/(\d+):(\d+)\s*(AM|PM)/i);
-  if (!match) return "";
-  let [, hours, minutes, period] = match;
-  hours = parseInt(hours);
-  if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
-  if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
-  return `${hours.toString().padStart(2, "0")}:${minutes}`;
-};
-
-const formatDateWithDay = (dateStr) => {
-  if (!dateStr) return "-";
-  const date = new Date(dateStr + "T00:00:00");
-  if (isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
+import {
+  formatTime12h,
+  parseTime12to24,
+  formatDateWithDay,
+} from "@/utils/classUtils";
 
 export default function ManageClasses() {
   const { mutateAsync: createClass, isPending: isCreating } = useCreateClass();
@@ -91,11 +58,9 @@ export default function ManageClasses() {
   const [selectedTutor, setSelectedTutor] = useState("");
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
-  const [showDateDetailsModal, setShowDateDetailsModal] = useState(false);
-  const [selectedModalDate, setSelectedModalDate] = useState("");
+
   const [deleteClassId, setDeleteClassId] = useState(null);
   const studentDropdownRef = useRef(null);
-  const [lastDialogDate, setLastDialogDate] = useState(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -117,19 +82,8 @@ export default function ManageClasses() {
     handleSubmit,
     reset,
     setValue,
-    watch,
     formState: { errors },
   } = useForm();
-  const scheduleDateValue = watch("scheduleDate");
-
-  useEffect(() => {
-    if (!scheduleDateValue || isEditMode) return;
-    if (scheduleDateValue !== lastDialogDate) {
-      setSelectedModalDate(scheduleDateValue);
-      setShowDateDetailsModal(true);
-      setLastDialogDate(scheduleDateValue);
-    }
-  }, [scheduleDateValue]);
 
   const tutors = tutorsData?.tutors || [];
   const students = studentsData?.students || [];
@@ -244,28 +198,6 @@ export default function ManageClasses() {
 
   const getTutorName = (tutorField) => {
     return tutorField?.userId?.name || "Unknown";
-  };
-
-  const getClassesForDate = (dateStr) => {
-    if (!dateStr) return [];
-
-    // Extract day of week from date string (e.g., "2026-03-11" -> "Wednesday")
-    const selectedDate = new Date(dateStr + "T00:00:00");
-    const selectedDayOfWeek = selectedDate.toLocaleDateString("en-US", {
-      weekday: "long",
-    });
-
-    // Match both old format (day names) and new format (date strings)
-    return classes.filter((cls) => {
-      const scheduledDays = cls.schedule?.days?.trim().toLowerCase() || "";
-      const selectedDay = selectedDayOfWeek.toLowerCase();
-
-      return (
-        scheduledDays === selectedDay ||
-        scheduledDays === dateStr ||
-        cls.schedule?.days === dateStr
-      );
-    });
   };
 
   return (
@@ -428,23 +360,10 @@ export default function ManageClasses() {
               <Label>Schedule Date</Label>
               <Input
                 type="date"
-                className="mt-1 cursor-pointer"
+                className="mt-1"
                 {...register("scheduleDate", {
                   required: "Schedule date is required",
                 })}
-                onClick={(e) => {
-                  // Clear the value so picking the same date fires onChange
-                  e.target.value = "";
-                  setValue("scheduleDate", "");
-                }}
-                onChange={(e) => {
-                  const date = e.target.value;
-                  setValue("scheduleDate", date);
-                  if (!isEditMode && date) {
-                    setSelectedModalDate(date);
-                    setShowDateDetailsModal(true);
-                  }
-                }}
               />
               {errors.scheduleDate && (
                 <p className="text-xs text-red-500 mt-1">
@@ -651,111 +570,6 @@ export default function ManageClasses() {
           )}
         </CardContent>
       </Card>
-
-      {/* Date Details Modal */}
-      <Dialog
-        open={showDateDetailsModal}
-        onOpenChange={setShowDateDetailsModal}
-      >
-        <DialogContent className="max-w-5xl">
-          <DialogHeader>
-            <DialogTitle>
-              Classes on{" "}
-              {selectedModalDate
-                ? formatDateWithDay(selectedModalDate)
-                : "Selected Date"}
-            </DialogTitle>
-            <DialogClose />
-          </DialogHeader>
-
-          {getClassesForDate(selectedModalDate).length > 0 ? (
-            <div className="rounded-md border overflow-x-auto mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Tutor</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {getClassesForDate(selectedModalDate).map((cls) => (
-                    <TableRow key={cls._id}>
-                      <TableCell className="font-medium capitalize">
-                        {cls.name}
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {cls.subject}
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {getTutorName(cls.tutorId)}
-                      </TableCell>
-                      <TableCell>{cls.schedule?.time || "-"}</TableCell>
-                      <TableCell>
-                        {cls.studentIds && cls.studentIds.length > 0 ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="sm" variant="outline">
-                                {cls.studentIds.length} Students
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-48">
-                              {cls.studentIds.map((student) => (
-                                <DropdownMenuItem key={student._id}>
-                                  {student.userId?.name || "Unknown"}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">
-                            No students
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-3 py-1 text-xs rounded-full font-medium ${
-                            cls.status === "completed"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {cls.status === "completed" ? "Completed" : "Active"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(cls)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(cls._id)}
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p className="text-center text-muted-foreground py-8">
-              No classes scheduled for this date
-            </p>
-          )}
-        </DialogContent>
-      </Dialog>
 
       <ConfirmActionDialog
         open={Boolean(deleteClassId)}
