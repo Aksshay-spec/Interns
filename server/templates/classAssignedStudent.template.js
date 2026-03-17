@@ -10,7 +10,7 @@ export const classAssignedStudentTemplate = (user) => ({
   <body style="margin:0;padding:0;background:#f8fafc;font-family:Arial,sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" style="padding:24px;">
       <tr>
-        <td align="center">
+        <td align="center" >
           <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
             <tr>
               <td style="background:#1d4ed8;color:#ffffff;padding:18px 24px;font-size:20px;font-weight:700;">
