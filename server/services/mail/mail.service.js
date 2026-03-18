@@ -2,7 +2,7 @@
 import transporter from "../../configs/mail.config.js";
 import { MAIL_TYPES } from "./mail.constant.js";
 
-const dummyEmail = "voltix755@gmail.com"; 
+const dummyEmail = "savaraakshay2366@gmail.com";
 
 import { tenantRegisterAdminTemplate } from "../../templates/tenantRegisterAdmin.template.js";
 import { tenantWelcomeTemplate } from "../../templates/tenantWelcome.template.js";
@@ -14,6 +14,8 @@ import { studentAddedTemplate } from "../../templates/studentAdded.template.js";
 import { classAssignedTutorTemplate } from "../../templates/classAssignedTutor.template.js";
 import { classAssignedStudentTemplate } from "../../templates/classAssignedStudent.template.js";
 import { passwordResetTemplate } from "../../templates/passwordReset.template.js";
+import { classReminderStudentTemplate } from "../../templates/classReminderStudentTemplate.js"
+import { classReminderTutorTemplate } from "../../templates/classReminderTutorTemplate.js"
 
 export const sendTenantMail = async (type, tenant, options = {}) => {
   try {
@@ -67,6 +69,14 @@ export const sendTenantMail = async (type, tenant, options = {}) => {
 
       case MAIL_TYPES.CLASS_ASSIGNED_STUDENT:
         mailData = classAssignedStudentTemplate(tenant);
+        recipient = tenant.email;
+        break;
+      case MAIL_TYPES.CLASS_REMINDER_STUDENT:
+        mailData = classReminderStudentTemplate(tenant);
+        recipient = tenant.email;
+        break;
+      case MAIL_TYPES.CLASS_REMINDER_TUTOR:
+        mailData = classReminderTutorTemplate(tenant);
         recipient = tenant.email;
         break;
 

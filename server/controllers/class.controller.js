@@ -10,28 +10,50 @@ const dummyEmail = "voltix755@gmail.com";
 // Create a new class (tenant only)
 export const createClass = async (req, res) => {
   try {
-    const { name, subject, tutorId, studentIds, schedule, description } = req.body;
+    const {
+      name,
+      subject,
+      tutorId,
+      studentIds,
+      schedule,
+      description,
+      platform,
+      meetLink,
+      reminderTime,
+    } = req.body;
+
     const tenantId = req.user.tenantId;
     let validStudents = [];
 
+    // ✅ Basic validation
     if (!name || !subject || !tutorId) {
       return res.status(400).json({
         message: "name, subject and tutorId are required",
       });
     }
 
-    // Verify tutor belongs to this tenant
-    const tutor = await Tutor.findOne({ _id: tutorId, tenantId });
-    if (!tutor) {
-      return res.status(404).json({ message: "Tutor not found in your institute" });
+    // ✅ Platform validation (important)
+    if (platform === "google-meet" && !meetLink) {
+      return res.status(400).json({
+        message: "Meet link is required for Google Meet",
+      });
     }
 
-    // Verify all students belong to this tenant
+    // ✅ Verify tutor belongs to tenant
+    const tutor = await Tutor.findOne({ _id: tutorId, tenantId });
+    if (!tutor) {
+      return res.status(404).json({
+        message: "Tutor not found in your institute",
+      });
+    }
+
+    // ✅ Verify students belong to tenant
     if (studentIds && studentIds.length > 0) {
       validStudents = await Student.find({
         _id: { $in: studentIds },
         tenantId,
       });
+
       if (validStudents.length !== studentIds.length) {
         return res.status(400).json({
           message: "One or more students not found in your institute",
@@ -39,6 +61,7 @@ export const createClass = async (req, res) => {
       }
     }
 
+    // ✅ Clean schedule
     const parsedSchedule = {
       days:
         typeof schedule?.days === "string"
@@ -47,6 +70,7 @@ export const createClass = async (req, res) => {
       time: schedule?.time || "",
     };
 
+    // ✅ Create class with NEW fields
     const newClass = await Class.create({
       tenantId,
       name,
@@ -55,37 +79,46 @@ export const createClass = async (req, res) => {
       studentIds: studentIds || [],
       schedule: parsedSchedule,
       description,
-    });
-    console.log(parsedSchedule)
 
+      // 🔥 NEW FIELDS
+      platform: platform || "",
+      meetLink: meetLink || "",
+      reminderTime: reminderTime || 0,
+    });
+
+    console.log(parsedSchedule);
+
+    // ✅ Send email to tutor
     const tutorUser = await User.findById(tutor.userId).select("name email");
+
     if (tutorUser) {
       await sendTenantMail(MAIL_TYPES.CLASS_ASSIGNED_TUTOR, {
         name: tutorUser.name,
-        email: dummyEmail,
+        email: dummyEmail, // replace later
         className: newClass.name,
         subject: newClass.subject,
         scheduleDays: newClass.schedule?.days || "",
         scheduleTime: newClass.schedule?.time || "",
-        // email: tutorUser.email,
+        meetLink: newClass.meetLink || "",
       });
     }
 
+    // ✅ Send email to students
     if (validStudents.length > 0) {
       const studentUsers = await User.find({
-        _id: { $in: validStudents.map((student) => student.userId) },
+        _id: { $in: validStudents.map((s) => s.userId) },
       }).select("name email");
 
       await Promise.all(
         studentUsers.map((studentUser) =>
           sendTenantMail(MAIL_TYPES.CLASS_ASSIGNED_STUDENT, {
             name: studentUser.name,
-            email: dummyEmail,
+            email: dummyEmail, // replace later
             className: newClass.name,
             subject: newClass.subject,
             scheduleDays: newClass.schedule?.days || "",
             scheduleTime: newClass.schedule?.time || "",
-            // email: studentUser.email,
+            meetLink: newClass.meetLink || "",
           })
         )
       );
@@ -97,7 +130,9 @@ export const createClass = async (req, res) => {
     });
   } catch (error) {
     console.error("Create Class Error:", error);
-    return res.status(500).json({ message: "Server Error" });
+    return res.status(500).json({
+      message: "Server Error",
+    });
   }
 };
 

@@ -47,3 +47,12 @@ export const updateProfileApi = (formData)=>{
 export const getProfileApi = () => {
   return API.get("/tenant/profile");
 };
+
+export const getMeetLinkApi = async ({ date, startTime, endTime }) => {
+      const res = await API.post("/meet/create", {
+        date,
+        startTime,
+        endTime,
+      });
+      return res.data;
+    }

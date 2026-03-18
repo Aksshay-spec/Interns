@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useGetMyClasses } from "@/hooks/tutor/useGetMyClasses";
+import { Button } from "@/components/ui/button";
 
 export default function MyClasses() {
   const { data: classesData, isLoading } = useGetMyClasses();
@@ -34,6 +35,7 @@ export default function MyClasses() {
                     <TableHead>Description</TableHead>
                     <TableHead>Students</TableHead>
                     <TableHead>Schedule</TableHead>
+                    <TableHead>Meeting</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -69,6 +71,27 @@ export default function MyClasses() {
                               {cls.schedule?.time || "-"}
                             </div>
                           </div>
+                        </TableCell>
+                         <TableCell>
+                          {cls.platform === "google-meet" && cls.meetLink ? (
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() =>
+                                window.open(cls.meetLink, "_blank")
+                              }
+                            >
+                              Join
+                            </Button>
+                          ) : cls.platform === "youtube" ? (
+                            <span className="text-xs text-muted-foreground">
+                              YouTube
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              -
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <span

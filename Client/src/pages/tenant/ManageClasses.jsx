@@ -46,6 +46,8 @@ import {
   formatDateWithDay,
 } from "@/utils/classUtils";
 
+import { useCreateMeet } from "@/hooks/tenant/useCreateMeet";
+
 export default function ManageClasses() {
   const { mutateAsync: createClass, isPending: isCreating } = useCreateClass();
   const { mutateAsync: updateClass, isPending: isUpdating } = useUpdateClass();
@@ -58,6 +60,10 @@ export default function ManageClasses() {
   const [selectedTutor, setSelectedTutor] = useState("");
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+
+  const [platform, setPlatform] = useState("");
+  const [meetLink, setMeetLink] = useState("");
+  const [reminderTime, setReminderTime] = useState("");
 
   const [deleteClassId, setDeleteClassId] = useState(null);
   const studentDropdownRef = useRef(null);
@@ -82,8 +88,40 @@ export default function ManageClasses() {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm();
+
+  const scheduleDate = watch("scheduleDate");
+  const startTime = watch("startTime");
+  const endTime = watch("endTime");
+
+  const { mutateAsync: createMeet, isPending: isGeneratingMeet } =
+    useCreateMeet();
+
+  const handleGenerateMeet = async () => {
+    if (!scheduleDate || !startTime || !endTime) {
+      toast.error("Select date and time first");
+      return;
+    }
+
+    try {
+      const res = await createMeet({
+        date: scheduleDate,
+        startTime,
+        endTime,
+      });
+
+      if (res?.success) {
+        setMeetLink(res.meetLink);
+        toast.success("Meet link generated!");
+      } else {
+        toast.error("Failed to generate meet");
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+  };
 
   const tutors = tutorsData?.tutors || [];
   const students = studentsData?.students || [];
@@ -135,6 +173,9 @@ export default function ManageClasses() {
         days: data.scheduleDate || "",
         time: formattedTime,
       },
+      platform,
+      meetLink,
+      reminderTime: Number(reminderTime),
     };
 
     if (isEditMode) {
@@ -180,6 +221,9 @@ export default function ManageClasses() {
     setSelectedTutor("");
     setSelectedStudents([]);
     setShowStudentDropdown(false);
+    setPlatform("");
+    setMeetLink("");
+    setReminderTime("");
     reset();
   };
 
@@ -404,6 +448,51 @@ export default function ManageClasses() {
               </div>
             </div>
 
+            {/* Platform Selection */}
+            <div>
+              <Label>Platform</Label>
+              <Select value={platform} onValueChange={setPlatform}>
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder="Select platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="google-meet">Google Meet</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Google Meet Section */}
+            {platform === "google-meet" && (
+              <div className="space-y-3">
+                <Button
+                  type="button"
+                  onClick={handleGenerateMeet}
+                  disabled={
+                    !scheduleDate || !startTime || !endTime || isGeneratingMeet
+                  }
+                  className="w-full md:w-32 p-3 "
+                >
+                  {isGeneratingMeet ? "Generating..." : "Generate Meet Link"}
+                </Button>
+
+                {meetLink && <Input value={meetLink} readOnly />}
+              </div>
+            )}
+
+            {/* Reminder */}
+            {platform === "google-meet" && (
+              <div>
+                <Label>Reminder Time (minutes)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 15"
+                  value={reminderTime}
+                  onChange={(e) => setReminderTime(e.target.value)}
+                />
+              </div>
+            )}
+
             <div className="flex flex-col md:flex-row justify-center md:justify-end gap-2 pt-4 border-t">
               {isEditMode && (
                 <Button
@@ -453,6 +542,7 @@ export default function ManageClasses() {
                     <TableHead>Status</TableHead>
                     <TableHead>Toggle</TableHead>
                     <TableHead>Created At</TableHead>
+                    <TableHead>Meeting</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -535,6 +625,27 @@ export default function ManageClasses() {
 
                         <TableCell>
                           {new Date(cls.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          {cls.platform === "google-meet" && cls.meetLink ? (
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() =>
+                                window.open(cls.meetLink, "_blank")
+                              }
+                            >
+                              Join
+                            </Button>
+                          ) : cls.platform === "youtube" ? (
+                            <span className="text-xs text-muted-foreground">
+                              YouTube
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              -
+                            </span>
+                          )}
                         </TableCell>
 
                         {/* Actions */}

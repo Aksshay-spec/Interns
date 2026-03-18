@@ -25,7 +25,19 @@ export const classAssignedStudentTemplate = (user) => ({
                 <p style="margin:0 0 8px;"><strong>Class:</strong> ${user.className || "N/A"}</p>
                 <p style="margin:0 0 8px;"><strong>Subject:</strong> ${user.subject || "N/A"}</p>
                 <p style="margin:0 0 14px;"><strong>Schedule:</strong> ${formatSchedule(user.scheduleDays, user.scheduleTime)}</p>
-                <p style="margin:0;">Please log in to your dashboard to check your class details.</p>
+                ${
+                  user.meetLink
+                    ? `
+                  <div style="margin-top:20px;text-align:center;">
+                    <a href="${user.meetLink}" target="_blank"
+                      style="background:#16a34a;color:#ffffff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600;">
+                      🎥 Join Google Meet
+                    </a>
+                  </div>
+                `
+                    : ""
+                }
+                <p style="margin-top:20px;">Please log in to your dashboard to check your class details.</p>
               </td>
             </tr>
           </table>

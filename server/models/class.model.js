@@ -40,6 +40,23 @@ const classSchema = new Schema(
       },
       time: String,
     },
+    platform: {
+      type: String,
+      enum: ["google-meet", "youtube", ""],
+      default: "",
+    },
+    meetLink: {
+      type: String,
+      default: "",
+    },
+    reminderTime: {
+      type: Number, // minutes
+      default: 30,
+    },
+    reminderSent: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
       enum: ["active", "completed"],

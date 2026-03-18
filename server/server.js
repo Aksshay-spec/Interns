@@ -3,6 +3,7 @@ import {config} from "dotenv";
 import { dbConnect } from "./configs/dbConnect.js";
 import cors from "cors";
 
+import "./services/reminderJob.js"
 
 import adminRoutes from "./routes/admin.routes.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -10,6 +11,7 @@ import tenantRoutes from "./routes/tenant.routes.js";
 import tutorRoutes from "./routes/tutor.routes.js";
 import studentRoutes from "./routes/student.routes.js"
 import classRoutes from "./routes/class.routes.js"
+import meetRoutes from "./routes/meet.routes.js"
 
 config();
 dbConnect();
@@ -40,6 +42,7 @@ app.use("/api/tenant", tenantRoutes);
 app.use("/api/tutor", tutorRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/class", classRoutes);
+app.use("/api/meet", meetRoutes);
 
 app.listen(Port , ()=>{
     console.log(`Server is running on port ${Port}`)

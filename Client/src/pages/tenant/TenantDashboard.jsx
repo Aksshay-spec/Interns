@@ -33,19 +33,40 @@ const TenantDashboard = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
 
-  const formattedDate = selectedDate
-    ? selectedDate.toLocaleDateString("en-CA")
-    : null;
-
-  const classesForDate = classes.filter(
-    (cls) => cls.schedule?.days === formattedDate,
-  );
-
-  // Normalize dates so comparisons only use day/month/year (ignore time)
+  // Normalize date (remove time)
   const normalizeDate = (date) =>
     new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
   const today = normalizeDate(new Date());
+
+  // Format selected date
+  const formattedDate = selectedDate
+    ? selectedDate.toLocaleDateString("en-CA")
+    : null;
+
+  // Classes for selected date
+  const classesForDate = classes.filter(
+    (cls) => cls.schedule?.days === formattedDate,
+  );
+
+  // Get all class dates
+  const classDates = classes.map((cls) =>
+    cls.schedule?.days ? new Date(cls.schedule.days) : null,
+  );
+
+  // Upcoming classes only + sorted
+  const upcomingClasses = classes
+    .filter((cls) => {
+      if (!cls.schedule?.days) return false;
+      const classDate = normalizeDate(new Date(cls.schedule.days));
+      return classDate >= today;
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.schedule.days) - new Date(b.schedule.days),
+    );
+
+  // Selected day check
   const selectedDay = selectedDate ? normalizeDate(selectedDate) : null;
 
   const isSelectedDate = (date) => {
@@ -55,7 +76,9 @@ const TenantDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold capitalize">Welcome, {user?.name}</h1>
+      <h1 className="text-3xl font-bold capitalize">
+        Welcome, {user?.name}
+      </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Calendar */}
@@ -75,31 +98,42 @@ const TenantDashboard = () => {
               modifiers={{
                 todayDefault: (date) =>
                   normalizeDate(date).getTime() === today.getTime(),
+
+                hasFutureClass: (date) =>
+                  classDates.some(
+                    (d) =>
+                      d &&
+                      normalizeDate(d).getTime() ===
+                        normalizeDate(date).getTime() &&
+                      normalizeDate(d) > today,
+                  ),
+
                 selectedPast: (date) =>
-                  isSelectedDate(date) && normalizeDate(date) < today,
-                selectedFuture: (date) =>
-                  isSelectedDate(date) && normalizeDate(date) > today,
+                  isSelectedDate(date) &&
+                  normalizeDate(date) < today,
               }}
               modifiersClassNames={{
                 todayDefault:
-                  "bg-green-600 text-white rounded-md hover:bg-green-700 hover:text-white",
+                  "bg-green-600 text-white rounded-md hover:bg-green-700",
+
+                hasFutureClass:
+                  "bg-yellow-300 text-yellow-950 rounded-md hover:bg-yellow-400",
+
                 selectedPast:
                   "bg-zinc-200 text-zinc-700 rounded-md hover:bg-zinc-300",
-                selectedFuture:
-                  "bg-yellow-300 text-yellow-950 rounded-md hover:bg-yellow-400",
               }}
             />
           </CardContent>
         </Card>
 
-        {/* All Classes Table */}
+        {/* Upcoming Classes Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Classes</CardTitle>
+            <CardTitle>Upcoming Classes</CardTitle>
           </CardHeader>
 
           <CardContent>
-            {classes.length > 0 ? (
+            {upcomingClasses.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -111,9 +145,11 @@ const TenantDashboard = () => {
                   </TableHeader>
 
                   <TableBody>
-                    {classes.map((cls) => (
+                    {upcomingClasses.map((cls) => (
                       <TableRow key={cls._id}>
-                        <TableCell className="capitalize">{cls.name}</TableCell>
+                        <TableCell className="capitalize">
+                          {cls.name}
+                        </TableCell>
 
                         <TableCell className="capitalize">
                           {cls.subject}
@@ -122,7 +158,9 @@ const TenantDashboard = () => {
                         <TableCell>
                           <div className="text-xs">
                             <div className="font-medium">
-                              {formatDateWithDay(cls.schedule?.days)}
+                              {formatDateWithDay(
+                                cls.schedule?.days,
+                              )}
                             </div>
 
                             <div className="text-muted-foreground">
@@ -136,7 +174,9 @@ const TenantDashboard = () => {
                 </Table>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No classes found</p>
+              <p className="text-sm text-muted-foreground">
+                No upcoming classes
+              </p>
             )}
           </CardContent>
         </Card>
@@ -165,13 +205,17 @@ const TenantDashboard = () => {
                 <TableBody>
                   {classesForDate.map((cls) => (
                     <TableRow key={cls._id}>
-                      <TableCell className="capitalize">{cls.name}</TableCell>
+                      <TableCell className="capitalize">
+                        {cls.name}
+                      </TableCell>
 
                       <TableCell className="capitalize">
                         {cls.subject}
                       </TableCell>
 
-                      <TableCell>{cls.schedule?.time || "-"}</TableCell>
+                      <TableCell>
+                        {cls.schedule?.time || "-"}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
