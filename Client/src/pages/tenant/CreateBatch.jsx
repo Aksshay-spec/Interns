@@ -242,7 +242,7 @@ export default function CreateBatch() {
             </div>
 
             <div className="relative" ref={studentDropdownRef}>
-              <Label>Students (Optional)</Label>
+              <Label>Students</Label>
               <button
                 type="button"
                 onClick={() => setShowStudentDropdown((prev) => !prev)}
