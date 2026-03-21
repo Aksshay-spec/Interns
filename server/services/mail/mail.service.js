@@ -2,7 +2,7 @@
 import transporter from "../../configs/mail.config.js";
 import { MAIL_TYPES } from "./mail.constant.js";
 
-const dummyEmail = "savaraakshay2366@gmail.com";
+const dummyEmail = "voltix755@gmail.com";
 
 import { tenantRegisterAdminTemplate } from "../../templates/tenantRegisterAdmin.template.js";
 import { tenantWelcomeTemplate } from "../../templates/tenantWelcome.template.js";

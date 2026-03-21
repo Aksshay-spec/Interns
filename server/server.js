@@ -26,7 +26,6 @@ app.use("/uploads", express.static("uploads"));
 
 
 
-
 const Port = process.env.PORT || 4000
 
 app.get('/',(req,res)=>{

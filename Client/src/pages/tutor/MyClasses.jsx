@@ -30,9 +30,9 @@ export default function MyClasses() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Class Name</TableHead>
+                    <TableHead>Topic</TableHead>
                     <TableHead>Subject</TableHead>
-                    <TableHead>Description</TableHead>
+                    <TableHead>Batch</TableHead>
                     <TableHead>Students</TableHead>
                     <TableHead>Schedule</TableHead>
                     <TableHead>Meeting</TableHead>
@@ -45,18 +45,14 @@ export default function MyClasses() {
                     classes.map((cls) => (
                       <TableRow key={cls._id}>
                         <TableCell className="font-medium">
-                          {cls.name}
+                          {cls.topic || "Class Session"}
                         </TableCell>
-                        <TableCell>{cls.subject}</TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {cls.description || "-"}
-                          </span>
-                        </TableCell>
+                        <TableCell>{cls.subjectId?.name || "-"}</TableCell>
+                        <TableCell>{cls.batchId?.name || "-"}</TableCell>
                         <TableCell>
                           <div className="text-sm space-y-1">
-                            {cls.studentIds?.length > 0
-                              ? cls.studentIds.map((s) => (
+                            {cls.batchId?.studentIds?.length > 0
+                              ? cls.batchId.studentIds.map((s) => (
                                   <div key={s._id}>
                                     {s.userId?.name || "Unknown"}
                                   </div>
@@ -66,27 +62,23 @@ export default function MyClasses() {
                         </TableCell>
                         <TableCell>
                           <div className="text-xs">
-                            <div>{cls.schedule?.days|| "-"}</div>
+                            <div>{cls.date || "-"}</div>
                             <div className="text-muted-foreground">
-                              {cls.schedule?.time || "-"}
+                              {cls.startTime ? `${cls.startTime} (${cls.duration || 0} min)` : "-"}
                             </div>
                           </div>
                         </TableCell>
                          <TableCell>
-                          {cls.platform === "google-meet" && cls.meetLink ? (
+                          {cls.videoLink ? (
                             <Button
                               size="sm"
                               className="bg-green-600 hover:bg-green-700 text-white"
                               onClick={() =>
-                                window.open(cls.meetLink, "_blank")
+                                window.open(cls.videoLink, "_blank")
                               }
                             >
                               Join
                             </Button>
-                          ) : cls.platform === "youtube" ? (
-                            <span className="text-xs text-muted-foreground">
-                              YouTube
-                            </span>
                           ) : (
                             <span className="text-xs text-muted-foreground">
                               -
@@ -98,19 +90,23 @@ export default function MyClasses() {
                             className={`px-3 py-1 text-xs rounded-full font-medium ${
                               cls.status === "completed"
                                 ? "bg-blue-100 text-blue-800"
+                                : cls.status === "cancelled"
+                                  ? "bg-red-100 text-red-700"
                                 : "bg-green-100 text-green-800"
                             }`}
                           >
                             {cls.status === "completed"
                               ? "Completed"
-                              : "Active"}
+                              : cls.status === "cancelled"
+                                ? "Cancelled"
+                                : "Scheduled"}
                           </span>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-sm">
+                      <TableCell colSpan={7} className="text-center text-sm">
                         No classes assigned
                       </TableCell>
                     </TableRow>

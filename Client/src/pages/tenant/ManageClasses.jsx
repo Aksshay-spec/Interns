@@ -1,5 +1,5 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useState, useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,63 +23,50 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { useCreateClass } from "@/hooks/tenant/useCreateClass";
-import { useGetClasses } from "@/hooks/tenant/useGetClasses";
-import { useDeleteClass } from "@/hooks/tenant/useDeleteClass";
-import { useUpdateClass } from "@/hooks/tenant/useUpdateClass";
-import { useGetTutors } from "@/hooks/tenant/useGetTutors";
-import { useGetStudents } from "@/hooks/tenant/useGetStudents";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
-import { toast } from "sonner";
-
-import {
-  formatTime12h,
-  parseTime12to24,
-  formatDateWithDay,
-} from "@/utils/classUtils";
+import { useCreateClass } from "@/hooks/tenant/useCreateClass";
+import { useGetClasses } from "@/hooks/tenant/useGetClasses";
+import { useDeleteClass } from "@/hooks/tenant/useDeleteClass";
+import { useUpdateClass } from "@/hooks/tenant/useUpdateClass";
+import { useGetTutors } from "@/hooks/tenant/useGetTutors";
+import { useGetSubjects } from "@/hooks/tenant/useGetSubjects";
+import { useGetBatches } from "@/hooks/tenant/useGetBatches";
 
 import { useCreateMeet } from "@/hooks/tenant/useCreateMeet";
+
+import { formatDateWithDay } from "@/utils/classUtils";
+import { toast } from "sonner";
 
 export default function ManageClasses() {
   const { mutateAsync: createClass, isPending: isCreating } = useCreateClass();
   const { mutateAsync: updateClass, isPending: isUpdating } = useUpdateClass();
   const { data: classesData, isLoading } = useGetClasses();
   const { mutate: deleteClass, isPending: isDeleting } = useDeleteClass();
+
   const { data: tutorsData } = useGetTutors();
-  const { data: studentsData } = useGetStudents();
+  const { data: subjectsData } = useGetSubjects();
+  const { data: batchesData } = useGetBatches();
+
+  const { mutateAsync: createMeet, isPending: isGeneratingMeet } = useCreateMeet();
 
   const [editingClass, setEditingClass] = useState(null);
-  const [selectedTutor, setSelectedTutor] = useState("");
-  const [selectedStudents, setSelectedStudents] = useState([]);
-  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
-
-  const [platform, setPlatform] = useState("");
-  const [meetLink, setMeetLink] = useState("");
-  const [reminderTime, setReminderTime] = useState("");
-
   const [deleteClassId, setDeleteClassId] = useState(null);
-  const studentDropdownRef = useRef(null);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (
-        studentDropdownRef.current &&
-        !studentDropdownRef.current.contains(e.target)
-      ) {
-        setShowStudentDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
+  const [selectedBatchId, setSelectedBatchId] = useState("");
+  const [selectedTeacherId, setSelectedTeacherId] = useState("");
+  const [selectedVideoProvider, setSelectedVideoProvider] = useState("manual");
+  const [selectedPrivacy, setSelectedPrivacy] = useState("");
+  const [selectedReminderTime, setSelectedReminderTime] = useState("0");
+  const [videoLink, setVideoLink] = useState("");
 
   const isEditMode = Boolean(editingClass);
 
@@ -88,44 +75,146 @@ export default function ManageClasses() {
     handleSubmit,
     reset,
     setValue,
-    watch,
+    getValues,
     formState: { errors },
   } = useForm();
 
-  const scheduleDate = watch("scheduleDate");
-  const startTime = watch("startTime");
-  const endTime = watch("endTime");
+  const classes = classesData?.classes || [];
+  const tutors = tutorsData?.tutors || [];
+  const subjects = subjectsData?.subjects || [];
+  const batches = batchesData?.batches || [];
 
-  const { mutateAsync: createMeet, isPending: isGeneratingMeet } =
-    useCreateMeet();
+  const activeSubjects = subjects.filter((subject) => subject.status === "active");
+
+  const filteredBatches = batches.filter((batch) => {
+    if (batch.status !== "active") return false;
+    if (!selectedSubjectId) return true;
+    return batch.subjectId?._id === selectedSubjectId;
+  });
+
+  const syncTeacherFromBatch = (batchId) => {
+    const selectedBatch = batches.find((batch) => batch._id === batchId);
+    if (!selectedBatch?.teacherId?._id) return;
+    const teacherId = selectedBatch.teacherId._id;
+    setSelectedTeacherId(teacherId);
+    setValue("teacherId", teacherId, { shouldValidate: true });
+  };
 
   const handleGenerateMeet = async () => {
-    if (!scheduleDate || !startTime || !endTime) {
-      toast.error("Select date and time first");
+    const date = getValues("date");
+    const startTime = getValues("startTime");
+    const duration = Number(getValues("duration") || 0);
+
+    if (!date || !startTime || duration <= 0) {
+      toast.error("Select date, start time and duration first");
       return;
     }
 
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const endDateTime = new Date(`${date}T${startTime}:00`);
+    endDateTime.setMinutes(endDateTime.getMinutes() + duration);
+
+    const endHour = String(endDateTime.getHours()).padStart(2, "0");
+    const endMinute = String(endDateTime.getMinutes()).padStart(2, "0");
+    const endTime = `${endHour}:${endMinute}`;
+
     try {
       const res = await createMeet({
-        date: scheduleDate,
-        startTime,
+        date,
+        startTime: `${String(startHour).padStart(2, "0")}:${String(startMinute).padStart(2, "0")}`,
         endTime,
       });
 
       if (res?.success) {
-        setMeetLink(res.meetLink);
+        setVideoLink(res.meetLink || "");
+        setSelectedVideoProvider("gmeet");
         toast.success("Meet link generated!");
       } else {
         toast.error("Failed to generate meet");
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     }
   };
 
-  const tutors = tutorsData?.tutors || [];
-  const students = studentsData?.students || [];
-  const classes = classesData?.classes || [];
+  const resetFormState = () => {
+    setEditingClass(null);
+    setSelectedSubjectId("");
+    setSelectedBatchId("");
+    setSelectedTeacherId("");
+    setSelectedVideoProvider("manual");
+    setSelectedPrivacy("");
+    setSelectedReminderTime("0");
+    setVideoLink("");
+    reset();
+  };
+
+  const onSubmit = async (data) => {
+    if (!selectedSubjectId || !selectedBatchId || !selectedTeacherId) {
+      toast.error("Please select subject and batch");
+      return;
+    }
+
+    const payload = {
+      topic: data.topic,
+      subjectId: selectedSubjectId,
+      batchId: selectedBatchId,
+      teacherId: selectedTeacherId,
+      date: data.date,
+      startTime: data.startTime,
+      duration: Number(data.duration),
+      videoProvider: selectedVideoProvider,
+      videoLink,
+      privacy: selectedPrivacy || undefined,
+      reminderTime: Number(selectedReminderTime),
+    };
+
+    if (isEditMode) {
+      payload.status = editingClass.status;
+      const res = await updateClass({
+        classId: editingClass._id,
+        data: payload,
+      });
+      if (res) {
+        toast.success("Class updated successfully!");
+        resetFormState();
+      }
+      return;
+    }
+
+    const res = await createClass(payload);
+    if (res) {
+      toast.success("Class created successfully!");
+      resetFormState();
+    }
+  };
+
+  const handleEdit = (cls) => {
+    setEditingClass(cls);
+    setValue("topic", cls.topic || "");
+    setValue("date", cls.date || "");
+    setValue("startTime", cls.startTime || "");
+    setValue("duration", cls.duration || 60);
+
+    setSelectedSubjectId(cls.subjectId?._id || "");
+    setSelectedBatchId(cls.batchId?._id || "");
+    setSelectedTeacherId(cls.teacherId?._id || "");
+    setSelectedVideoProvider(cls.videoProvider || "manual");
+    setSelectedPrivacy(cls.privacy || "");
+    setSelectedReminderTime(String(cls.reminderTime ?? 0));
+    setVideoLink(cls.videoLink || "");
+  };
+
+  const handleStatusChange = async (cls, newStatus) => {
+    const res = await updateClass({
+      classId: cls._id,
+      data: { status: newStatus },
+    });
+
+    if (res) {
+      toast.success(`Class marked as ${newStatus}!`);
+    }
+  };
 
   const handleDelete = (id) => {
     setDeleteClassId(id);
@@ -142,365 +231,198 @@ export default function ManageClasses() {
     });
   };
 
-  const toggleStudent = (studentId) => {
-    setSelectedStudents((prev) =>
-      prev.includes(studentId)
-        ? prev.filter((id) => id !== studentId)
-        : [...prev, studentId],
-    );
-  };
-
-  const onSubmit = async (data) => {
-    if (!selectedTutor) {
-      toast.error("Please select a tutor");
-      return;
-    }
-
-    const formattedTime =
-      data.startTime && data.endTime
-        ? `${formatTime12h(data.startTime)} - ${formatTime12h(data.endTime)}`
-        : data.startTime
-          ? formatTime12h(data.startTime)
-          : "";
-
-    const payload = {
-      name: data.name,
-      subject: data.subject,
-      tutorId: selectedTutor,
-      description: data.description,
-      studentIds: selectedStudents,
-      schedule: {
-        days: data.scheduleDate || "",
-        time: formattedTime,
-      },
-      platform,
-      meetLink,
-      reminderTime: Number(reminderTime),
-    };
-
-    if (isEditMode) {
-      if (data.status) {
-        payload.status = data.status;
-      }
-      const res = await updateClass({
-        classId: editingClass._id,
-        data: payload,
-      });
-      if (res) {
-        toast.success("Class updated successfully!");
-        handleCancelEdit();
-      }
-      return;
-    }
-
-    const res = await createClass(payload);
-    if (res) {
-      toast.success("Class created successfully!");
-      handleCancelEdit();
-    }
-  };
-
-  const handleEdit = (cls) => {
-    setEditingClass(cls);
-    setValue("name", cls.name || "");
-    setValue("subject", cls.subject || "");
-    setValue("description", cls.description || "");
-    setValue("scheduleDate", cls.schedule?.days || "");
-    setValue("status", cls.status || "active");
-    setSelectedTutor(cls.tutorId?._id || "");
-    setSelectedStudents(cls.studentIds?.map((s) => s._id) || []);
-
-    const timeStr = cls.schedule?.time || "";
-    const timeParts = timeStr.split(" - ");
-    setValue("startTime", parseTime12to24(timeParts[0]));
-    setValue("endTime", parseTime12to24(timeParts[1]));
-  };
-
-  const handleCancelEdit = () => {
-    setEditingClass(null);
-    setSelectedTutor("");
-    setSelectedStudents([]);
-    setShowStudentDropdown(false);
-    setPlatform("");
-    setMeetLink("");
-    setReminderTime("");
-    reset();
-  };
-
-  const handleToggleStatus = async (cls) => {
-    const nextStatus = cls.status === "completed" ? "active" : "completed";
-
-    const res = await updateClass({
-      classId: cls._id,
-      data: { status: nextStatus },
-    });
-
-    if (res) {
-      toast.success(`Class marked as ${nextStatus}!`);
-    }
-  };
-
-  const getTutorName = (tutorField) => {
-    return tutorField?.userId?.name || "Unknown";
-  };
-
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-800">
-          Manage Classes
-        </h1>
+        <h1 className="text-2xl font-semibold text-slate-800">Manage Classes</h1>
       </div>
 
-      {/* Create / Edit Class Form */}
       <Card className="bg-white border border-slate-200 shadow-sm">
         <CardContent className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Class Name */}
             <div>
-              <Label>Class Name</Label>
+              <Label>Topic</Label>
               <Input
-                placeholder="e.g. Math 101"
+                placeholder="e.g. Algebra fundamentals"
                 className="mt-1"
-                {...register("name", { required: "Class name is required" })}
+                {...register("topic")}
               />
-              {errors.name && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.name.message}
-                </p>
-              )}
             </div>
 
-            {/* Subject */}
             <div>
               <Label>Subject</Label>
-              <Input
-                placeholder="e.g. Mathematics"
-                className="mt-1"
-                {...register("subject", { required: "Subject is required" })}
-              />
-              {errors.subject && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.subject.message}
-                </p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div>
-              <Label>Description</Label>
-              <textarea
-                placeholder="e.g. This class covers fundamental algebra concepts..."
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none min-h-[80px]"
-                {...register("description")}
-              />
-            </div>
-
-            {/* Tutor Selection */}
-            <div>
-              <Label>Assign Tutor</Label>
-              <Select value={selectedTutor} onValueChange={setSelectedTutor}>
+              <Select
+                value={selectedSubjectId}
+                onValueChange={(value) => {
+                  setSelectedSubjectId(value);
+                  setSelectedBatchId("");
+                  setSelectedTeacherId("");
+                }}
+              >
                 <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Select a tutor" />
+                  <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  {tutors
-                    .filter((t) => t.status === "active")
-                    .map((tutor) => (
-                      <SelectItem key={tutor.tutorId} value={tutor.tutorId}>
-                        {tutor.name} — {tutor.subjects?.join(", ")}
-                      </SelectItem>
-                    ))}
+                  {activeSubjects.map((subject) => (
+                    <SelectItem key={subject._id} value={subject._id}>
+                      {subject.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Student Selection */}
-            <div className="relative" ref={studentDropdownRef}>
-              <Label>Enroll Students</Label>
-              <button
-                type="button"
-                onClick={() => setShowStudentDropdown((prev) => !prev)}
-                className="mt-1 w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm hover:bg-accent focus:outline-none"
-              >
-                <span className="text-muted-foreground">
-                  {selectedStudents.length > 0
-                    ? `${selectedStudents.length} student(s) selected`
-                    : "Select students"}
-                </span>
-              </button>
-
-              {showStudentDropdown && (
-                <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
-                  {(() => {
-                    const activeStudents = students.filter(
-                      (s) => s.status === "active",
-                    );
-                    const allSelected =
-                      activeStudents.length > 0 &&
-                      activeStudents.every((s) =>
-                        selectedStudents.includes(s.studentId),
-                      );
-                    return (
-                      <>
-                        {activeStudents.length > 0 && (
-                          <div className="border-b px-2 py-1.5">
-                            <label className="flex items-center gap-2 cursor-pointer rounded px-2 py-1 hover:bg-accent text-sm font-medium">
-                              <input
-                                type="checkbox"
-                                checked={allSelected}
-                                onChange={() => {
-                                  if (allSelected) {
-                                    setSelectedStudents([]);
-                                  } else {
-                                    setSelectedStudents(
-                                      activeStudents.map((s) => s.studentId),
-                                    );
-                                  }
-                                }}
-                                className="rounded"
-                              />
-                              <span>Select All</span>
-                            </label>
-                          </div>
-                        )}
-                        <div className="max-h-48 overflow-y-auto p-2 space-y-1">
-                          {activeStudents.length > 0 ? (
-                            activeStudents.map((student) => (
-                              <label
-                                key={student.studentId}
-                                className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-accent text-sm"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedStudents.includes(
-                                    student.studentId,
-                                  )}
-                                  onChange={() =>
-                                    toggleStudent(student.studentId)
-                                  }
-                                  className="rounded"
-                                />
-                                <span>
-                                  {student.name} — {student.rollNumber}
-                                </span>
-                              </label>
-                            ))
-                          ) : (
-                            <p className="text-sm text-muted-foreground px-2 py-1.5">
-                              No students available
-                            </p>
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-
-            {/* Schedule Date */}
             <div>
-              <Label>Schedule Date</Label>
-              <Input
-                type="date"
-                className="mt-1"
-                {...register("scheduleDate", {
-                  required: "Schedule date is required",
-                })}
-              />
-              {errors.scheduleDate && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.scheduleDate.message}
-                </p>
-              )}
+              <Label>Batch</Label>
+              <Select
+                value={selectedBatchId}
+                onValueChange={(value) => {
+                  setSelectedBatchId(value);
+                  syncTeacherFromBatch(value);
+                }}
+              >
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder="Select batch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredBatches.map((batch) => (
+                    <SelectItem key={batch._id} value={batch._id}>
+                      {batch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Schedule Time */}
-            <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Teacher</Label>
+              <Input
+                className="mt-1"
+                readOnly
+                value={
+                  tutors.find((tutor) => tutor.tutorId === selectedTeacherId)?.name ||
+                  "Auto-selected from batch"
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  className="mt-1"
+                  {...register("date", { required: "Date is required" })}
+                />
+                {errors.date && (
+                  <p className="text-xs text-red-500 mt-1">{errors.date.message}</p>
+                )}
+              </div>
+
               <div>
                 <Label>Start Time</Label>
                 <Input
                   type="time"
                   className="mt-1"
-                  {...register("startTime", {
-                    required: "Start time is required",
-                  })}
+                  {...register("startTime", { required: "Start time is required" })}
                 />
                 {errors.startTime && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.startTime.message}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{errors.startTime.message}</p>
                 )}
               </div>
+
               <div>
-                <Label>End Time</Label>
+                <Label>Duration (minutes)</Label>
                 <Input
-                  type="time"
+                  type="number"
+                  min="1"
                   className="mt-1"
-                  {...register("endTime", { required: "End time is required" })}
+                  {...register("duration", {
+                    required: "Duration is required",
+                    min: { value: 1, message: "Duration must be at least 1 minute" },
+                  })}
                 />
-                {errors.endTime && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {errors.endTime.message}
-                  </p>
+                {errors.duration && (
+                  <p className="text-xs text-red-500 mt-1">{errors.duration.message}</p>
                 )}
               </div>
             </div>
 
-            {/* Platform Selection */}
             <div>
-              <Label>Platform</Label>
-              <Select value={platform} onValueChange={setPlatform}>
+              <Label>Video Provider</Label>
+              <Select value={selectedVideoProvider} onValueChange={setSelectedVideoProvider}>
                 <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Select platform" />
+                  <SelectValue placeholder="Select provider" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="google-meet">Google Meet</SelectItem>
+                  <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="gmeet">Google Meet</SelectItem>
+                  <SelectItem value="zoom">Zoom</SelectItem>
                   <SelectItem value="youtube">YouTube</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Google Meet Section */}
-            {platform === "google-meet" && (
+            {selectedVideoProvider === "gmeet" && (
               <div className="space-y-3">
                 <Button
                   type="button"
                   onClick={handleGenerateMeet}
-                  disabled={
-                    !scheduleDate || !startTime || !endTime || isGeneratingMeet
-                  }
-                  className="w-full md:w-32 p-3 "
+                  disabled={isGeneratingMeet}
+                  className="w-full md:w-40"
                 >
                   {isGeneratingMeet ? "Generating..." : "Generate Meet Link"}
                 </Button>
-
-                {meetLink && <Input value={meetLink} readOnly />}
+                {videoLink && <Input value={videoLink} readOnly />}
               </div>
             )}
 
-            {/* Reminder */}
-            {platform === "google-meet" && (
+            {selectedVideoProvider !== "gmeet" && (
               <div>
-                <Label>Reminder Time (minutes)</Label>
+                <Label>Video Link</Label>
                 <Input
-                  type="number"
-                  placeholder="e.g. 15"
-                  value={reminderTime}
-                  onChange={(e) => setReminderTime(e.target.value)}
+                  className="mt-1"
+                  placeholder="Paste class link"
+                  value={videoLink}
+                  onChange={(e) => setVideoLink(e.target.value)}
                 />
               </div>
             )}
 
+            {selectedVideoProvider === "youtube" && (
+              <div>
+                <Label>Privacy</Label>
+                <Select value={selectedPrivacy || "public"} onValueChange={setSelectedPrivacy}>
+                  <SelectTrigger className="mt-1 w-full">
+                    <SelectValue placeholder="Select privacy" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Public</SelectItem>
+                    <SelectItem value="private">Private</SelectItem>
+                    <SelectItem value="unlisted">Unlisted</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div>
+              <Label>Reminder</Label>
+              <Select value={selectedReminderTime} onValueChange={setSelectedReminderTime}>
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder="Select reminder time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">No reminder</SelectItem>
+                  <SelectItem value="10">10 minutes before</SelectItem>
+                  <SelectItem value="30">30 minutes before</SelectItem>
+                  <SelectItem value="60">60 minutes before</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex flex-col md:flex-row justify-center md:justify-end gap-2 pt-4 border-t">
               {isEditMode && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancelEdit}
-                  className="w-full md:w-35"
-                >
+                <Button type="button" variant="outline" onClick={resetFormState} className="w-full md:w-35">
                   Cancel
                 </Button>
               )}
@@ -522,7 +444,6 @@ export default function ManageClasses() {
         </CardContent>
       </Card>
 
-      {/* Classes Table */}
       <Card>
         <CardContent className="p-6">
           <h2 className="text-lg font-semibold mb-4">All Classes</h2>
@@ -534,15 +455,16 @@ export default function ManageClasses() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Topic</TableHead>
                     <TableHead>Subject</TableHead>
-                    <TableHead>Tutor</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Schedule</TableHead>
+                    <TableHead>Batch</TableHead>
+                    <TableHead>Teacher</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Provider</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Toggle</TableHead>
-                    <TableHead>Created At</TableHead>
-                    <TableHead>Meeting</TableHead>
+                    <TableHead>Toggle Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -551,126 +473,88 @@ export default function ManageClasses() {
                   {classes.length > 0 ? (
                     classes.map((cls) => (
                       <TableRow key={cls._id}>
-                        <TableCell className="font-medium capitalize">
-                          {cls.name}
-                        </TableCell>
-                        <TableCell className="capitalize">
-                          {cls.subject}
-                        </TableCell>
-                        <TableCell className="capitalize">
-                          {getTutorName(cls.tutorId)}
-                        </TableCell>
-                        <TableCell>
-                          {cls.studentIds && cls.studentIds.length > 0 ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button size="sm" variant="outline">
-                                  {cls.studentIds.length} Students
-                                </Button>
-                              </DropdownMenuTrigger>
-
-                              <DropdownMenuContent className="w-48">
-                                {cls.studentIds.map((student) => (
-                                  <DropdownMenuItem key={student._id}>
-                                    {student.userId?.name || "Unknown"}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">
-                              No students
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-xs">
-                            <div className="font-medium">
-                              {formatDateWithDay(cls.schedule?.days)}
-                            </div>
-                            <div className="text-muted-foreground">
-                              {cls.schedule?.time || "-"}
-                            </div>
-                          </div>
-                        </TableCell>
-
-                        {/* Status Badge */}
+                        <TableCell>{cls.topic || "Class Session"}</TableCell>
+                        <TableCell>{cls.subjectId?.name || "-"}</TableCell>
+                        <TableCell>{cls.batchId?.name || "-"}</TableCell>
+                        <TableCell>{cls.teacherId?.userId?.name || "-"}</TableCell>
+                        <TableCell>{formatDateWithDay(cls.date)}</TableCell>
+                        <TableCell>{cls.startTime || "-"}</TableCell>
+                        <TableCell>{cls.duration ? `${cls.duration} min` : "-"}</TableCell>
+                        <TableCell>{cls.videoProvider || "manual"}</TableCell>
                         <TableCell>
                           <span
                             className={`px-3 py-1 text-xs rounded-full font-medium ${
                               cls.status === "completed"
                                 ? "bg-blue-100 text-blue-800"
-                                : "bg-green-100 text-green-800"
+                                : cls.status === "cancelled"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-green-100 text-green-800"
                             }`}
                           >
-                            {cls.status === "completed"
-                              ? "Completed"
-                              : "Active"}
+                            {cls.status}
                           </span>
                         </TableCell>
-
-                        {/* Toggle Status */}
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleToggleStatus(cls)}
-                            disabled={isUpdating}
-                          >
-                            {cls.status === "completed"
-                              ? "Reactivate"
-                              : "Complete"}
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant={
+                                  cls.status === "completed"
+                                    ? "secondary"
+                                    : cls.status === "cancelled"
+                                      ? "destructive"
+                                      : "default"
+                                }
+                                disabled={isUpdating}
+                                className="text-xs"
+                              >
+                                {cls.status}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleStatusChange(cls, "scheduled")}>
+                                Scheduled
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(cls, "completed")}>
+                                Completed
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(cls, "cancelled")}>
+                                Cancelled
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
-
                         <TableCell>
-                          {new Date(cls.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          {cls.platform === "google-meet" && cls.meetLink ? (
-                            <Button
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                              onClick={() =>
-                                window.open(cls.meetLink, "_blank")
-                              }
-                            >
-                              Join
-                            </Button>
-                          ) : cls.platform === "youtube" ? (
-                            <span className="text-xs text-muted-foreground">
-                              YouTube
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              -
-                            </span>
-                          )}
-                        </TableCell>
-
-                        {/* Actions */}
-                        <TableCell className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEdit(cls)}
-                          >
-                            Edit
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDelete(cls._id)}
-                          >
-                            Delete
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                Actions
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEdit(cls)}>
+                                Edit
+                              </DropdownMenuItem>
+                              {cls.videoLink && (
+                                <DropdownMenuItem onClick={() => window.open(cls.videoLink, "_blank")}>
+                                  Open Link
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => handleDelete(cls._id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center text-sm">
+                      <TableCell colSpan={11} className="text-center text-sm">
                         No classes found
                       </TableCell>
                     </TableRow>
@@ -688,7 +572,7 @@ export default function ManageClasses() {
           if (!open) setDeleteClassId(null);
         }}
         title="Delete class?"
-        description="This will permanently remove the class and cannot be undone."
+        description="This will permanently remove the class."
         confirmText="Delete"
         onConfirm={confirmDelete}
         isConfirming={isDeleting}

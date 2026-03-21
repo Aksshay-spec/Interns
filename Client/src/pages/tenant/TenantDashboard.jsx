@@ -46,24 +46,24 @@ const TenantDashboard = () => {
 
   // Classes for selected date
   const classesForDate = classes.filter(
-    (cls) => cls.schedule?.days === formattedDate,
+    (cls) => cls.date === formattedDate,
   );
 
   // Get all class dates
   const classDates = classes.map((cls) =>
-    cls.schedule?.days ? new Date(cls.schedule.days) : null,
+    cls.date ? new Date(cls.date) : null,
   );
 
   // Upcoming classes only + sorted
   const upcomingClasses = classes
     .filter((cls) => {
-      if (!cls.schedule?.days) return false;
-      const classDate = normalizeDate(new Date(cls.schedule.days));
+      if (!cls.date) return false;
+      const classDate = normalizeDate(new Date(cls.date));
       return classDate >= today;
     })
     .sort(
       (a, b) =>
-        new Date(a.schedule.days) - new Date(b.schedule.days),
+        new Date(a.date) - new Date(b.date),
     );
 
   // Selected day check
@@ -148,23 +148,25 @@ const TenantDashboard = () => {
                     {upcomingClasses.map((cls) => (
                       <TableRow key={cls._id}>
                         <TableCell className="capitalize">
-                          {cls.name}
+                          {cls.topic || "Class Session"}
                         </TableCell>
 
                         <TableCell className="capitalize">
-                          {cls.subject}
+                          {cls.subjectId?.name || "-"}
                         </TableCell>
 
                         <TableCell>
                           <div className="text-xs">
                             <div className="font-medium">
                               {formatDateWithDay(
-                                cls.schedule?.days,
+                                cls.date,
                               )}
                             </div>
 
                             <div className="text-muted-foreground">
-                              {cls.schedule?.time || "-"}
+                              {cls.startTime
+                                ? `${cls.startTime} (${cls.duration || 0} min)`
+                                : "-"}
                             </div>
                           </div>
                         </TableCell>
@@ -206,15 +208,17 @@ const TenantDashboard = () => {
                   {classesForDate.map((cls) => (
                     <TableRow key={cls._id}>
                       <TableCell className="capitalize">
-                        {cls.name}
+                        {cls.topic || "Class Session"}
                       </TableCell>
 
                       <TableCell className="capitalize">
-                        {cls.subject}
+                        {cls.subjectId?.name || "-"}
                       </TableCell>
 
                       <TableCell>
-                        {cls.schedule?.time || "-"}
+                        {cls.startTime
+                          ? `${cls.startTime} (${cls.duration || 0} min)`
+                          : "-"}
                       </TableCell>
                     </TableRow>
                   ))}

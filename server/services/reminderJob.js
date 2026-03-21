@@ -6,81 +6,84 @@ import {MAIL_TYPES} from "../services/mail/mail.constant.js"
 import {getClassStartDateTime} from "../utils/classHelper.js"
 
 
-
 cron.schedule("* * * * *", async () => {
   try {
     console.log(" Running reminder job...");
 
     const now = new Date();
 
-    // Get only active classes where reminder not sent
+    // Check upcoming scheduled classes.
     const classes = await Class.find({
-      status: "active",
-      reminderSent: false,
-    }).populate("studentIds tutorId");
+      status: "scheduled",
+    })
+      .populate("subjectId", "name")
+      .populate({
+        path: "teacherId",
+        populate: { path: "userId", select: "name email" },
+      })
+      .populate({
+        path: "batchId",
+        populate: {
+          path: "studentIds",
+          populate: { path: "userId", select: "name email" },
+        },
+      });
 
     for (const cls of classes) {
-      const classStart = getClassStartDateTime(
-        cls.schedule?.days,
-        cls.schedule?.time
-      );
+      const classStart = getClassStartDateTime(cls.date, cls.startTime);
 
       if (!classStart) continue;
 
-      const reminderMinutes = cls.reminderTime || 30;
+      const reminderMinutes = cls.reminderTime || 0;
 
-      // Calculate reminder trigger time
-      const reminderTime = new Date(
+      const reminderAt = new Date(
         classStart.getTime() - reminderMinutes * 60000
       );
 
-      // Check if it's time to send reminder
-      if (now >= reminderTime && now < classStart) {
-        console.log(` Sending reminder for class: ${cls.name}`);
+      // Fire once around the reminder minute to avoid duplicate sends.
+      if (now >= reminderAt && now < new Date(reminderAt.getTime() + 60000)) {
+        console.log(` Sending reminder for class: ${cls.topic || "Class"}`);
 
-       
-        if (cls.studentIds?.length > 0) {
-          const studentUsers = await User.find({
-            _id: { $in: cls.studentIds.map((s) => s.userId) },
-          }).select("name email");
+        const scheduleTimeText = `${cls.startTime || ""} (${cls.duration || 0} mins)`;
+        const subjectName = cls.subjectId?.name || "N/A";
+        const className = cls.topic || "Class Session";
+        const videoLink = cls.videoLink || "";
+
+        if (cls.batchId?.studentIds?.length > 0) {
+          const studentUsers = cls.batchId.studentIds
+            .map((studentProfile) => studentProfile?.userId)
+            .filter(Boolean);
 
           await Promise.all(
             studentUsers.map((student) =>
               sendTenantMail(MAIL_TYPES.CLASS_REMINDER_STUDENT, {
                 name: student.name,
                 email: student.email,
-                className: cls.name,
-                subject: cls.subject,
-                scheduleDays: cls.schedule?.days,
-                scheduleTime: cls.schedule?.time,
-                meetLink: cls.meetLink,
+                className,
+                subject: subjectName,
+                scheduleDays: cls.date,
+                scheduleTime: scheduleTimeText,
+                meetLink: videoLink,
               })
             )
           );
         }
 
-        
-        if (cls.tutorId) {
-          const tutorUser = await User.findById(cls.tutorId.userId).select(
-            "name email"
-          );
+        if (cls.teacherId?.userId) {
+          const tutorUser = await User.findById(cls.teacherId.userId).select("name email");
 
           if (tutorUser) {
             await sendTenantMail(MAIL_TYPES.CLASS_REMINDER_TUTOR, {
               name: tutorUser.name,
               email: tutorUser.email,
-              className: cls.name,
-              subject: cls.subject,
-              scheduleDays: cls.schedule?.days,
-              scheduleTime: cls.schedule?.time,
-              meetLink: cls.meetLink,
+              className,
+              subject: subjectName,
+              scheduleDays: cls.date,
+              scheduleTime: scheduleTimeText,
+              meetLink: videoLink,
             });
           }
         }
-
-        
-        cls.reminderSent = true;
-        await cls.save();
       }
     }
   } catch (error) {

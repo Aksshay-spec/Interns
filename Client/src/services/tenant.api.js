@@ -48,6 +48,30 @@ export const getProfileApi = () => {
   return API.get("/tenant/profile");
 };
 
+export const createSubjectApi = (data) => {
+  return API.post("/tenant/subjects", data);
+};
+
+export const getTenantSubjectsApi = () => {
+  return API.get("/tenant/subjects");
+};
+
+export const updateSubjectApi = (subjectId, data) => {
+  return API.put(`/tenant/subjects/${subjectId}`, data);
+};
+
+export const createBatchApi = (data) => {
+  return API.post("/tenant/batches", data);
+};
+
+export const getTenantBatchesApi = () => {
+  return API.get("/tenant/batches");
+};
+
+export const updateBatchApi = (batchId, data) => {
+  return API.put(`/tenant/batches/${batchId}`, data);
+};
+
 export const getMeetLinkApi = async ({ date, startTime, endTime }) => {
       const res = await API.post("/meet/create", {
         date,

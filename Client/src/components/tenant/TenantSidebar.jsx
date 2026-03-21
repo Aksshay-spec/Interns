@@ -1,5 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, UserPlus, GraduationCap, BookOpen } from "lucide-react";
+import {
+  LayoutDashboard,
+  UserPlus,
+  GraduationCap,
+  BookOpen,
+  BookMarked,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TenantSidebarContent = () => {
@@ -45,6 +52,32 @@ const TenantSidebarContent = () => {
       >
         <GraduationCap size={18} />
         Add Student
+      </Link>
+
+      <Link
+        to={`${basePath}/add-subject`}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+          "text-slate-300 hover:bg-slate-800 hover:text-white",
+          location.pathname === `${basePath}/add-subject` &&
+            "bg-slate-800 text-white"
+        )}
+      >
+        <BookMarked size={18} />
+        Add Subject
+      </Link>
+
+      <Link
+        to={`${basePath}/create-batch`}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+          "text-slate-300 hover:bg-slate-800 hover:text-white",
+          location.pathname === `${basePath}/create-batch` &&
+            "bg-slate-800 text-white"
+        )}
+      >
+        <Users size={18} />
+        Create Batch
       </Link>
 
       <Link

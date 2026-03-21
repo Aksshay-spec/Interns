@@ -12,6 +12,12 @@ import {
     getProfile
     
 } from "../controllers/tenant.controller.js";
+import {
+    createSubject,
+    getSubjectsByTenant,
+    updateSubject
+} from "../controllers/subject.controller.js";
+import { createBatch, getBatchesByTenant, updateBatch } from "../controllers/batch.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
 import { upload } from "../configs/multer.js";
@@ -97,4 +103,47 @@ router.get(
     authorizeRoles("tenant"),
     getProfile
 );
+
+router.post(
+    "/subjects",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    createSubject
+);
+
+router.get(
+    "/subjects",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    getSubjectsByTenant
+);
+
+router.put(
+    "/subjects/:subjectId",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    updateSubject
+);
+
+router.post(
+    "/batches",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    createBatch
+);
+
+router.get(
+    "/batches",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    getBatchesByTenant
+);
+
+router.put(
+    "/batches/:batchId",
+    authMiddleware,
+    authorizeRoles("tenant"),
+    updateBatch
+);
+
 export default router;

@@ -19,6 +19,8 @@ import TenantProfile from "@/pages/tenant/Profile";
 import AddTutor from "@/pages/tenant/AddTutor";
 import AddStudent from "@/pages/tenant/AddStudent";
 import ManageClasses from "@/pages/tenant/ManageClasses";
+import AddSubject from "@/pages/tenant/AddSubject";
+import CreateBatch from "@/pages/tenant/CreateBatch";
 
 //tutor pages
 import TutorLayout from "@/layouts/TutorLayout";
@@ -66,6 +68,8 @@ function App() {
             <Route path="/tenant/dashboard" element={<TenantDashboard />} />
             <Route path="/tenant/add-tutor" element={<AddTutor />} />
             <Route path="/tenant/add-student" element={<AddStudent />} />
+            <Route path="/tenant/add-subject" element={<AddSubject />} />
+            <Route path="/tenant/create-batch" element={<CreateBatch />} />
             <Route path="/tenant/classes" element={<ManageClasses />} />
             <Route path="/tenant/profile" element={<TenantProfile />} />
           </Route>

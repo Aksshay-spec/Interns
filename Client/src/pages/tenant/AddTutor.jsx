@@ -20,11 +20,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { useRegisterTutor } from "@/hooks/tenant/useRegisterTutor";
 import { useGetTutors } from "@/hooks/tenant/useGetTutors";
 import { useDeleteTutor } from "@/hooks/tenant/useDeleteTutor";
 import { useUpdateTutor } from "@/hooks/tenant/useUpdateTutor";
+import { useGetSubjects } from "@/hooks/tenant/useGetSubjects";
 import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
 import { toast } from "sonner";
@@ -34,10 +42,11 @@ export default function AddTutor() {
     useRegisterTutor();
   const { mutateAsync: updateTutor, isPending: isUpdating } = useUpdateTutor();
   const { data: tutors, isLoading } = useGetTutors();
-  console.log("Tutors:", tutors);
+  const { data: subjectsData } = useGetSubjects();
   const { mutate: deleteTutor, isPending: isDeleting } = useDeleteTutor();
   const [editingTutor, setEditingTutor] = useState(null);
   const [deleteTutorId, setDeleteTutorId] = useState(null);
+  const [selectedSubject, setSelectedSubject] = useState("");
   const isEditMode = Boolean(editingTutor);
 
   const {
@@ -45,7 +54,7 @@ export default function AddTutor() {
     handleSubmit,
     reset,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitted },
   } = useForm();
 
   const handleDelete = (id) => {
@@ -64,11 +73,16 @@ export default function AddTutor() {
   };
 
   const onSubmit = async (data) => {
+    if (!selectedSubject) {
+      toast.error("Please select a subject");
+      return;
+    }
+
     if (isEditMode) {
       const payload = {
         name: data.name,
         email: data.email,
-        subjects: data.subjects,
+        subjects: [selectedSubject],
         experienceYears: data.experienceYears,
         phone: data.phone,
       };
@@ -84,10 +98,14 @@ export default function AddTutor() {
       return;
     }
 
-    const res = await createTutor(data);
+    const res = await createTutor({
+      ...data,
+      subjects: [selectedSubject],
+    });
     if (res) {
       toast.success("Tutor created successfully!");
       reset();
+      setSelectedSubject("");
     }
   };
 
@@ -96,15 +114,19 @@ export default function AddTutor() {
     setValue("name", tutor.name || "");
     setValue("email", tutor.email || "");
     setValue("password", "");
-    setValue("subjects", tutor.subjects?.join(", ") || "");
     setValue("experienceYears", tutor.experienceYears ?? 0);
     setValue("phone", tutor.phone || "");
+    setSelectedSubject(tutor.subjects?.[0] || "");
   };
 
   const handleCancelEdit = () => {
     setEditingTutor(null);
+    setSelectedSubject("");
     reset();
   };
+
+  const subjects = subjectsData?.subjects || [];
+  const activeSubjects = subjects.filter((subject) => subject.status === "active");
 
   const handleToggleStatus = async (tutor) => {
     const nextStatus = tutor.status === "inactive" ? "active" : "inactive";
@@ -186,16 +208,27 @@ export default function AddTutor() {
             {/* Subjects */}
             <div>
               <Label>Subjects</Label>
-              <Input
-                placeholder="Math, Science"
-                className="mt-1"
-                {...register("subjects", {
-                  required: "Subjects are required",
-                })}
-              />
-              {errors.subjects && (
+              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder="Select subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeSubjects.length > 0 ? (
+                    activeSubjects.map((subject) => (
+                      <SelectItem key={subject._id} value={subject.name}>
+                        {subject.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="__no_subject" disabled>
+                      Add subjects first to assign here
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              {isSubmitted && !selectedSubject && (
                 <p className="text-xs text-red-500 mt-1">
-                  {errors.subjects.message}
+                  Subject is required
                 </p>
               )}
             </div>

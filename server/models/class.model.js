@@ -10,57 +10,82 @@ const classSchema = new Schema(
       required: true,
       index: true,
     },
-    name: {
-      type: String,
-      required: true,
-    },
-    subject: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-      default: "",
-    },
-    tutorId: {
+
+    teacherId: {
       type: Schema.Types.ObjectId,
       ref: "Tutor",
       required: true,
     },
-    studentIds: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Student",
-      },
-    ],
-    schedule: {
-      days: {
-        type: String,
-        required: true,
-      },
-      time: String,
+
+    subjectId: {
+      type: Schema.Types.ObjectId,
+      ref: "Subject",
+      required: true,
     },
-    platform: {
+
+    batchId: {
+      type: Schema.Types.ObjectId,
+      ref: "Batch",
+      required: true,
+    },
+
+    topic: {
       type: String,
-      enum: ["google-meet", "youtube", ""],
-      default: "",
+      trim: true,
     },
-    meetLink: {
+
+    date: {
       type: String,
-      default: "",
+      required: true,
     },
+
+    startTime: {
+      type: String,
+      required: true,
+    },
+
+    duration: {
+      type: Number,
+      required: true,
+    },
+
+    videoProvider: {
+      type: String,
+      enum: ["manual", "gmeet", "zoom", "youtube"],
+      default: "manual",
+    },
+
+    videoLink: {
+      type: String,
+    },
+
+    meetingId: {
+      type: String,
+    },
+
+    calendarEventId: {
+      type: String,
+    },
+
+    videoId: {
+      type: String,
+    },
+
+    privacy: {
+      type: String,
+      enum: ["public", "private", "unlisted"],
+    },
+
     reminderTime: {
-      type: Number, // minutes
-      default: 30,
+      type: Number,
+      enum: [0, 10, 30, 60],
+      default: 0,
     },
-    reminderSent: {
-      type: Boolean,
-      default: false,
-    },
+
     status: {
       type: String,
-      enum: ["active", "completed"],
-      default: "active",
+      enum: ["scheduled", "completed", "cancelled"],
+      default: "scheduled",
     },
   },
   { timestamps: true }
