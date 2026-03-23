@@ -91,6 +91,41 @@ export default function CreateBatch() {
         : [...prev, studentIdValue],
     );
   };
+  const isAllSelected =
+    activeStudents.length > 0 &&
+    selectedStudents.length === activeStudents.length;
+
+  const handleSelectAllToggle = () => {
+    if (isAllSelected) {
+      setSelectedStudents([]);
+    } else {
+      const allIds = activeStudents.map((s) => s.studentId);
+      setSelectedStudents(allIds);
+    }
+  };
+
+  const selectedSubject = subjects.find(
+    (subject) => subject._id === selectedSubjectId,
+  );
+
+  const filteredTutors = tutors.filter((tutor) => {
+    if (tutor.status !== "active") return false;
+    if (!selectedSubject) return false;
+
+    const tutorSubjects = tutor.subjects || [];
+    const selectedSubjectName = selectedSubject.name?.trim().toLowerCase();
+
+    const matchesBySubjectName = tutorSubjects.some(
+      (tutorSubject) =>
+        String(tutorSubject).trim().toLowerCase() === selectedSubjectName,
+    );
+
+    const matchesBySubjectId =
+      tutor.subjectId?._id === selectedSubjectId ||
+      tutor.subjectId === selectedSubjectId;
+
+    return matchesBySubjectName || matchesBySubjectId;
+  });
 
   const onSubmit = async (data) => {
     if (!selectedSubjectId || !selectedTeacherId) {
@@ -175,7 +210,9 @@ export default function CreateBatch() {
                 {...register("name", { required: "Batch name is required" })}
               />
               {errors.name && (
-                <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -185,6 +222,7 @@ export default function CreateBatch() {
                 value={selectedSubjectId}
                 onValueChange={(value) => {
                   setSelectedSubjectId(value);
+                  setSelectedTeacherId("");
                   setValue("subjectId", value, { shouldValidate: true });
                 }}
               >
@@ -206,7 +244,9 @@ export default function CreateBatch() {
                 {...register("subjectId", { required: "Subject is required" })}
               />
               {errors.subjectId && (
-                <p className="text-xs text-red-500 mt-1">{errors.subjectId.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.subjectId.message}
+                </p>
               )}
             </div>
 
@@ -218,18 +258,29 @@ export default function CreateBatch() {
                   setSelectedTeacherId(value);
                   setValue("teacherId", value, { shouldValidate: true });
                 }}
+                disabled={!selectedSubjectId}
               >
                 <SelectTrigger className="mt-1 w-full">
                   <SelectValue placeholder="Select teacher" />
                 </SelectTrigger>
                 <SelectContent>
-                  {tutors
-                    .filter((tutor) => tutor.status === "active")
-                    .map((tutor) => (
-                      <SelectItem key={tutor.tutorId} value={tutor.tutorId}>
-                        {tutor.name}
-                      </SelectItem>
-                    ))}
+                  {selectedSubjectId ? (
+                    filteredTutors.length > 0 ? (
+                      filteredTutors.map((tutor) => (
+                        <SelectItem key={tutor.tutorId} value={tutor.tutorId}>
+                          {tutor.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
+                        No teachers available
+                      </div>
+                    )
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      Select a subject first
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
               <input
@@ -237,7 +288,9 @@ export default function CreateBatch() {
                 {...register("teacherId", { required: "Teacher is required" })}
               />
               {errors.teacherId && (
-                <p className="text-xs text-red-500 mt-1">{errors.teacherId.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.teacherId.message}
+                </p>
               )}
             </div>
 
@@ -257,6 +310,16 @@ export default function CreateBatch() {
 
               {showStudentDropdown && (
                 <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md max-h-56 overflow-auto">
+                  <label className="flex items-center gap-2 px-3 py-2 text-sm border-b cursor-pointer bg-muted">
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={handleSelectAllToggle}
+                    />
+                    <span className="font-medium">Select All</span>
+                  </label>
+
+                  {/* Students List */}
                   {activeStudents.length > 0 ? (
                     activeStudents.map((student) => (
                       <label
@@ -272,7 +335,9 @@ export default function CreateBatch() {
                       </label>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground px-3 py-2">No active students</p>
+                    <p className="text-sm text-muted-foreground px-3 py-2">
+                      No active students
+                    </p>
                   )}
                 </div>
               )}
@@ -333,7 +398,9 @@ export default function CreateBatch() {
                       <TableRow key={batch._id}>
                         <TableCell>{batch.name}</TableCell>
                         <TableCell>{batch.subjectId?.name || "-"}</TableCell>
-                        <TableCell>{batch.teacherId?.userId?.name || "-"}</TableCell>
+                        <TableCell>
+                          {batch.teacherId?.userId?.name || "-"}
+                        </TableCell>
                         <TableCell>{batch.studentIds?.length || 0}</TableCell>
                         <TableCell>
                           <span
@@ -343,7 +410,9 @@ export default function CreateBatch() {
                                 : "bg-green-100 text-green-800"
                             }`}
                           >
-                            {batch.status === "completed" ? "Completed" : "Active"}
+                            {batch.status === "completed"
+                              ? "Completed"
+                              : "Active"}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -357,10 +426,14 @@ export default function CreateBatch() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEdit(batch)}>
+                              <DropdownMenuItem
+                                onClick={() => handleEdit(batch)}
+                              >
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleStatus(batch)}>
+                              <DropdownMenuItem
+                                onClick={() => handleToggleStatus(batch)}
+                              >
                                 {batch.status === "completed"
                                   ? "Mark Active"
                                   : "Mark Completed"}

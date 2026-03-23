@@ -2,9 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 
 import {
   Table,
@@ -16,14 +14,6 @@ import {
 } from "@/components/ui/table";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -32,30 +22,37 @@ import {
 
 import ConfirmActionDialog from "@/components/common/ConfirmActionDialog";
 
-import { useCreateClass } from "@/hooks/tenant/useCreateClass";
-import { useGetClasses } from "@/hooks/tenant/useGetClasses";
-import { useDeleteClass } from "@/hooks/tenant/useDeleteClass";
-import { useUpdateClass } from "@/hooks/tenant/useUpdateClass";
+import { useClassManager } from "@/hooks/tenant/useClassManager";
+
 import { useGetTutors } from "@/hooks/tenant/useGetTutors";
 import { useGetSubjects } from "@/hooks/tenant/useGetSubjects";
 import { useGetBatches } from "@/hooks/tenant/useGetBatches";
 
 import { useCreateMeet } from "@/hooks/tenant/useCreateMeet";
 
+import ClassForm from "@/components/tenant/ClassForm";
+
 import { formatDateWithDay } from "@/utils/classUtils";
 import { toast } from "sonner";
 
 export default function ManageClasses() {
-  const { mutateAsync: createClass, isPending: isCreating } = useCreateClass();
-  const { mutateAsync: updateClass, isPending: isUpdating } = useUpdateClass();
-  const { data: classesData, isLoading } = useGetClasses();
-  const { mutate: deleteClass, isPending: isDeleting } = useDeleteClass();
+  const {
+    classes,
+    isLoading,
+    createClass,
+    updateClass,
+    deleteClass,
+    isCreating,
+    isUpdating,
+    isDeleting,
+  } = useClassManager();
 
   const { data: tutorsData } = useGetTutors();
   const { data: subjectsData } = useGetSubjects();
   const { data: batchesData } = useGetBatches();
 
-  const { mutateAsync: createMeet, isPending: isGeneratingMeet } = useCreateMeet();
+  const { mutateAsync: createMeet, isPending: isGeneratingMeet } =
+    useCreateMeet();
 
   const [editingClass, setEditingClass] = useState(null);
   const [deleteClassId, setDeleteClassId] = useState(null);
@@ -79,18 +76,9 @@ export default function ManageClasses() {
     formState: { errors },
   } = useForm();
 
-  const classes = classesData?.classes || [];
   const tutors = tutorsData?.tutors || [];
   const subjects = subjectsData?.subjects || [];
   const batches = batchesData?.batches || [];
-
-  const activeSubjects = subjects.filter((subject) => subject.status === "active");
-
-  const filteredBatches = batches.filter((batch) => {
-    if (batch.status !== "active") return false;
-    if (!selectedSubjectId) return true;
-    return batch.subjectId?._id === selectedSubjectId;
-  });
 
   const syncTeacherFromBatch = (batchId) => {
     const selectedBatch = batches.find((batch) => batch._id === batchId);
@@ -234,213 +222,43 @@ export default function ManageClasses() {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-800">Manage Classes</h1>
+        <h1 className="text-2xl font-semibold text-slate-800">
+          Manage Classes
+        </h1>
       </div>
 
       <Card className="bg-white border border-slate-200 shadow-sm">
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <Label>Topic</Label>
-              <Input
-                placeholder="e.g. Algebra fundamentals"
-                className="mt-1"
-                {...register("topic")}
-              />
-            </div>
-
-            <div>
-              <Label>Subject</Label>
-              <Select
-                value={selectedSubjectId}
-                onValueChange={(value) => {
-                  setSelectedSubjectId(value);
-                  setSelectedBatchId("");
-                  setSelectedTeacherId("");
-                }}
-              >
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Select subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {activeSubjects.map((subject) => (
-                    <SelectItem key={subject._id} value={subject._id}>
-                      {subject.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Batch</Label>
-              <Select
-                value={selectedBatchId}
-                onValueChange={(value) => {
-                  setSelectedBatchId(value);
-                  syncTeacherFromBatch(value);
-                }}
-              >
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Select batch" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredBatches.map((batch) => (
-                    <SelectItem key={batch._id} value={batch._id}>
-                      {batch.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Teacher</Label>
-              <Input
-                className="mt-1"
-                readOnly
-                value={
-                  tutors.find((tutor) => tutor.tutorId === selectedTeacherId)?.name ||
-                  "Auto-selected from batch"
-                }
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label>Date</Label>
-                <Input
-                  type="date"
-                  className="mt-1"
-                  {...register("date", { required: "Date is required" })}
-                />
-                {errors.date && (
-                  <p className="text-xs text-red-500 mt-1">{errors.date.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label>Start Time</Label>
-                <Input
-                  type="time"
-                  className="mt-1"
-                  {...register("startTime", { required: "Start time is required" })}
-                />
-                {errors.startTime && (
-                  <p className="text-xs text-red-500 mt-1">{errors.startTime.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label>Duration (minutes)</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  className="mt-1"
-                  {...register("duration", {
-                    required: "Duration is required",
-                    min: { value: 1, message: "Duration must be at least 1 minute" },
-                  })}
-                />
-                {errors.duration && (
-                  <p className="text-xs text-red-500 mt-1">{errors.duration.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <Label>Video Provider</Label>
-              <Select value={selectedVideoProvider} onValueChange={setSelectedVideoProvider}>
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Select provider" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">Manual</SelectItem>
-                  <SelectItem value="gmeet">Google Meet</SelectItem>
-                  <SelectItem value="zoom">Zoom</SelectItem>
-                  <SelectItem value="youtube">YouTube</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {selectedVideoProvider === "gmeet" && (
-              <div className="space-y-3">
-                <Button
-                  type="button"
-                  onClick={handleGenerateMeet}
-                  disabled={isGeneratingMeet}
-                  className="w-full md:w-40"
-                >
-                  {isGeneratingMeet ? "Generating..." : "Generate Meet Link"}
-                </Button>
-                {videoLink && <Input value={videoLink} readOnly />}
-              </div>
-            )}
-
-            {selectedVideoProvider !== "gmeet" && (
-              <div>
-                <Label>Video Link</Label>
-                <Input
-                  className="mt-1"
-                  placeholder="Paste class link"
-                  value={videoLink}
-                  onChange={(e) => setVideoLink(e.target.value)}
-                />
-              </div>
-            )}
-
-            {selectedVideoProvider === "youtube" && (
-              <div>
-                <Label>Privacy</Label>
-                <Select value={selectedPrivacy || "public"} onValueChange={setSelectedPrivacy}>
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue placeholder="Select privacy" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="public">Public</SelectItem>
-                    <SelectItem value="private">Private</SelectItem>
-                    <SelectItem value="unlisted">Unlisted</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div>
-              <Label>Reminder</Label>
-              <Select value={selectedReminderTime} onValueChange={setSelectedReminderTime}>
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Select reminder time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">No reminder</SelectItem>
-                  <SelectItem value="10">10 minutes before</SelectItem>
-                  <SelectItem value="30">30 minutes before</SelectItem>
-                  <SelectItem value="60">60 minutes before</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col md:flex-row justify-center md:justify-end gap-2 pt-4 border-t">
-              {isEditMode && (
-                <Button type="button" variant="outline" onClick={resetFormState} className="w-full md:w-35">
-                  Cancel
-                </Button>
-              )}
-              <Button
-                type="submit"
-                disabled={isCreating || isUpdating}
-                className="bg-indigo-600 w-full md:w-35 hover:bg-indigo-700 text-white"
-              >
-                {isCreating || isUpdating
-                  ? isEditMode
-                    ? "Updating..."
-                    : "Creating..."
-                  : isEditMode
-                    ? "Update Class"
-                    : "Create Class"}
-              </Button>
-            </div>
-          </form>
+          <ClassForm
+            onSubmit={onSubmit}
+            register={register}
+            handleSubmit={handleSubmit}
+            errors={errors}
+            tutors={tutors}
+            subjects={subjects}
+            batches={batches}
+            selectedSubjectId={selectedSubjectId}
+            setSelectedSubjectId={setSelectedSubjectId}
+            selectedBatchId={selectedBatchId}
+            setSelectedBatchId={setSelectedBatchId}
+            selectedTeacherId={selectedTeacherId}
+            setSelectedTeacherId={setSelectedTeacherId}
+            selectedVideoProvider={selectedVideoProvider}
+            setSelectedVideoProvider={setSelectedVideoProvider}
+            selectedPrivacy={selectedPrivacy}
+            setSelectedPrivacy={setSelectedPrivacy}
+            selectedReminderTime={selectedReminderTime}
+            setSelectedReminderTime={setSelectedReminderTime}
+            videoLink={videoLink}
+            setVideoLink={setVideoLink}
+            isEditMode={isEditMode}
+            isCreating={isCreating}
+            isUpdating={isUpdating}
+            syncTeacherFromBatch={syncTeacherFromBatch}
+            handleGenerateMeet={handleGenerateMeet}
+            isGeneratingMeet={isGeneratingMeet}
+            resetFormState={resetFormState}
+          />
         </CardContent>
       </Card>
 
@@ -476,10 +294,14 @@ export default function ManageClasses() {
                         <TableCell>{cls.topic || "Class Session"}</TableCell>
                         <TableCell>{cls.subjectId?.name || "-"}</TableCell>
                         <TableCell>{cls.batchId?.name || "-"}</TableCell>
-                        <TableCell>{cls.teacherId?.userId?.name || "-"}</TableCell>
+                        <TableCell>
+                          {cls.teacherId?.userId?.name || "-"}
+                        </TableCell>
                         <TableCell>{formatDateWithDay(cls.date)}</TableCell>
                         <TableCell>{cls.startTime || "-"}</TableCell>
-                        <TableCell>{cls.duration ? `${cls.duration} min` : "-"}</TableCell>
+                        <TableCell>
+                          {cls.duration ? `${cls.duration} min` : "-"}
+                        </TableCell>
                         <TableCell>{cls.videoProvider || "manual"}</TableCell>
                         <TableCell>
                           <span
@@ -513,13 +335,25 @@ export default function ManageClasses() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleStatusChange(cls, "scheduled")}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(cls, "scheduled")
+                                }
+                              >
                                 Scheduled
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleStatusChange(cls, "completed")}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(cls, "completed")
+                                }
+                              >
                                 Completed
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleStatusChange(cls, "cancelled")}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusChange(cls, "cancelled")
+                                }
+                              >
                                 Cancelled
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -537,7 +371,11 @@ export default function ManageClasses() {
                                 Edit
                               </DropdownMenuItem>
                               {cls.videoLink && (
-                                <DropdownMenuItem onClick={() => window.open(cls.videoLink, "_blank")}>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    window.open(cls.videoLink, "_blank")
+                                  }
+                                >
                                   Open Link
                                 </DropdownMenuItem>
                               )}
