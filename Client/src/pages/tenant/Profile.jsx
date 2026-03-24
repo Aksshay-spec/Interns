@@ -16,6 +16,8 @@ const Profile = () => {
       name: "",
       email: "",
       tenantName: "",
+      newPassword: "",
+      confirmPassword: "",
     },
   });
 
@@ -31,6 +33,8 @@ const Profile = () => {
         name: profileUser.name || "",
         email: profileUser.email || "",
         tenantName: profileData?.profile?.tenantName || "",
+        newPassword: "",
+        confirmPassword: "",
       });
       setPreview(
         profileUser?.profileImage
@@ -41,6 +45,22 @@ const Profile = () => {
   }, [profileData, user, reset]);
 
   const onSubmit = async (values) => {
+    const hasPasswordInput = values.newPassword || values.confirmPassword;
+    if (hasPasswordInput) {
+      if (!values.newPassword || !values.confirmPassword) {
+        toast.error("Please fill both password fields");
+        return;
+      }
+      if (values.newPassword.length < 6) {
+        toast.error("New password must be at least 6 characters");
+        return;
+      }
+      if (values.newPassword !== values.confirmPassword) {
+        toast.error("Passwords do not match");
+        return;
+      }
+    }
+
     const formData = new FormData();
 
     formData.append("name", values.name);
@@ -49,6 +69,10 @@ const Profile = () => {
 
     if (values.photo?.[0]) {
       formData.append("profileImage", values.photo[0]);
+    }
+
+    if (hasPasswordInput) {
+      formData.append("password", values.newPassword);
     }
 
     
@@ -127,6 +151,30 @@ const Profile = () => {
             </label>
             <input
               {...register("tenantName")}
+              className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              New Password
+            </label>
+            <input
+              type="password"
+              {...register("newPassword")}
+              placeholder="Enter new password"
+              className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              {...register("confirmPassword")}
+              placeholder="Confirm new password"
               className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>

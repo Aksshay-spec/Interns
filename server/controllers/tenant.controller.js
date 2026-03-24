@@ -473,7 +473,7 @@ export const updateProfile = async (req, res) => {
     const userId = req.user.id;
     const tenantId = req.user.tenantId;
 
-    const { name, email, tenantName } = req.body;
+    const { name, email, tenantName, password } = req.body;
 
     const user = await User.findById(userId);
 
@@ -490,6 +490,13 @@ export const updateProfile = async (req, res) => {
     }
 
     if (name) user.name = name;
+
+    if (password !== undefined && password !== "") {
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      user.passwordHash = await bcrypt.hash(password, 10);
+    }
 
     if (req.file) {
       user.profileImage = `/uploads/${req.file.filename}`;

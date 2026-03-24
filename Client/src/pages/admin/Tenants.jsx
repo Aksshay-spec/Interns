@@ -2,6 +2,8 @@ import { useState } from "react";
 import { usePendingTenants } from "@/hooks/admin/usePendingTenants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Loader from "@/components/common/Loader";
 
 import {
@@ -34,6 +36,12 @@ export default function Tenants() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pendingAction, setPendingAction] = useState(null);
   const [selectedTenantId, setSelectedTenantId] = useState(null);
+  const [filters, setFilters] = useState({
+    tuitionName: "",
+    email: "",
+    plan: "",
+    status: "",
+  });
 
   const {
     tenants,
@@ -91,6 +99,26 @@ export default function Tenants() {
   };
 
   const activeConfirm = pendingAction ? confirmCopy[pendingAction] : null;
+
+  const filteredTenants = tenants.filter((tenant) => {
+    const tuitionNameMatch =
+      !filters.tuitionName ||
+      tenant.name?.toLowerCase().includes(filters.tuitionName.toLowerCase());
+
+    const emailMatch =
+      !filters.email ||
+      tenant.ownerUserId?.email
+        ?.toLowerCase()
+        .includes(filters.email.toLowerCase());
+
+    const planMatch =
+      !filters.plan ||
+      tenant.plan?.toLowerCase().includes(filters.plan.toLowerCase());
+
+    const statusMatch = !filters.status || tenant.status === filters.status;
+
+    return tuitionNameMatch && emailMatch && planMatch && statusMatch;
+  });
   
 
   if (isLoading) return <Loader />;
@@ -113,14 +141,64 @@ export default function Tenants() {
         </CardHeader>
 
         <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Input
+              placeholder="Filter by tuition name"
+              value={filters.tuitionName}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, tuitionName: e.target.value }))
+              }
+            />
+
+            <Input
+              placeholder="Filter by email"
+              value={filters.email}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, email: e.target.value }))
+              }
+            />
+
+            <Input
+              placeholder="Filter by plan"
+              value={filters.plan}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, plan: e.target.value }))
+              }
+            />
+
+            <Select
+              value={filters.status || "all"}
+              onValueChange={(value) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  status: value === "all" ? "" : value,
+                }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="blocked">Blocked</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {tenants.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
               No Tenants
             </div>
+          ) : filteredTenants.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground">
+              No tenants match the filters
+            </div>
           ) : (
             <>
               <div className="w-full overflow-x-auto">
-                <Table className="min-w-[800px]">
+                <Table className="min-w-200">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Tuition Name</TableHead>
@@ -133,7 +211,7 @@ export default function Tenants() {
                   </TableHeader>
 
                   <TableBody>
-                    {tenants.map((tenant) => (
+                    {filteredTenants.map((tenant) => (
                       <TableRow key={tenant._id}>
                         <TableCell className="font-medium capitalize">
                           {tenant.name}

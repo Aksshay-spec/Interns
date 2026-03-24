@@ -1,5 +1,6 @@
 import { User } from "../models/user.model.js";
 import { Tutor } from "../models/tutor.model.js";
+import bcrypt from "bcryptjs";
 
 export const getProfile = async (req, res) => {
   try {
@@ -36,7 +37,7 @@ export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const { name, email, phone, subjects, experienceYears } = req.body;
+    const { name, email, phone, subjects, experienceYears, password } = req.body;
 
     const user = await User.findById(userId);
 
@@ -53,6 +54,13 @@ export const updateProfile = async (req, res) => {
     }
 
     if (name) user.name = name;
+
+    if (password !== undefined && password !== "") {
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      user.passwordHash = await bcrypt.hash(password, 10);
+    }
 
     if (req.file) {
       user.profileImage = `/uploads/${req.file.filename}`;

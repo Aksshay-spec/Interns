@@ -228,7 +228,7 @@ export default function Tutors() {
                 </Pagination>
               )}
             </>
-          })()}
+          )}
         </CardContent>
       </Card>
     </div>
