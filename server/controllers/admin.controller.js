@@ -1,5 +1,8 @@
 import { Tenant } from "../models/tenant.model.js";
 import { User } from "../models/user.model.js";
+import { Tutor } from "../models/tutor.model.js";
+import { Student } from "../models/student.model.js";
+import { Batch } from "../models/batch.model.js";
 
 import { sendTenantMail } from "../services/mail/mail.service.js";
 import { MAIL_TYPES } from "../services/mail/mail.constant.js";
@@ -306,6 +309,134 @@ export const getProfile = async (req, res) => {
     return res.status(500).json({
       message: "Failed to fetch profile",
       error: error.message,
+    });
+  }
+};
+
+/**
+ * Get all tutors (Admin Dashboard with pagination)
+ */
+export const getAllTutors = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const totalTutors = await Tutor.countDocuments();
+
+    const tutors = await Tutor.find()
+      .populate("userId", "name email")
+      .populate("tenantId", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return res.status(200).json({
+      tutors,
+      currentPage: page,
+      totalPages: Math.ceil(totalTutors / limit),
+      totalTutors,
+    });
+  } catch (error) {
+    console.error("Get All Tutors Error:", error);
+    return res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
+
+/**
+ * Get all students (Admin Dashboard with pagination)
+ */
+export const getAllStudents = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const totalStudents = await Student.countDocuments();
+
+    const students = await Student.find()
+      .populate("userId", "name email")
+      .populate("tenantId", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Get batches for each student
+    const studentsWithBatches = await Promise.all(
+      students.map(async (student) => {
+        const batches = await Batch.find({
+          studentIds: student._id,
+          tenantId: student.tenantId
+        })
+        .populate("subjectId", "name")
+        .select("name subjectId");
+
+        return {
+          ...student.toObject(),
+          batches: batches.map(batch => ({
+            _id: batch._id,
+            name: batch.name,
+            subject: batch.subjectId?.name || "N/A"
+          }))
+        };
+      })
+    );
+
+    return res.status(200).json({
+      students: studentsWithBatches,
+      currentPage: page,
+      totalPages: Math.ceil(totalStudents / limit),
+      totalStudents,
+    });
+  } catch (error) {
+    console.error("Get All Students Error:", error);
+    return res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
+
+/**
+ * Get all batches (Admin Dashboard with pagination)
+ */
+export const getAllBatches = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const totalBatches = await Batch.countDocuments();
+
+    const batches = await Batch.find()
+      .populate("tenantId", "name")
+      .populate("subjectId", "name")
+      .populate({
+        path: "teacherId",
+        populate: { path: "userId", select: "name email" },
+      })
+      .populate({
+        path: "studentIds",
+        populate: { path: "userId", select: "name" },
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return res.status(200).json({
+      batches,
+      currentPage: page,
+      totalPages: Math.ceil(totalBatches / limit),
+      totalBatches,
+    });
+  } catch (error) {
+    console.error("Get All Batches Error:", error);
+    return res.status(500).json({
+      message: "Server Error",
     });
   }
 };

@@ -9,7 +9,10 @@ import ResetPassword from "@/pages/auth/ResetPassword";
 
 import AdminLayout from "@/layouts/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
-import PendingRequests from "@/pages/admin/tenants";
+import Tenants from "@/pages/admin/Tenants";
+import Tutors from "@/pages/admin/Tutors";
+import Students from "@/pages/admin/Students";
+import Batches from "@/pages/admin/Batches";
 import AdminProfile from "@/pages/admin/Profile";
 
 import TenantLayout from "@/layouts/TenantLayout";
@@ -54,7 +57,10 @@ function App() {
         >
           <Route element={<AdminLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/tenants" element={<PendingRequests />} />
+            <Route path="/admin/tenants" element={<Tenants />} />
+            <Route path="/admin/tutors" element={<Tutors />} />
+            <Route path="/admin/students" element={<Students />} />
+            <Route path="/admin/batches" element={<Batches />} />
             <Route path="/admin/profile" element={<AdminProfile />} />
           </Route>
         </Route>

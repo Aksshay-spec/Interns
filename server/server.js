@@ -3,7 +3,6 @@ import {config} from "dotenv";
 import { dbConnect } from "./configs/dbConnect.js";
 import cors from "cors";
 
-import "./services/reminderJob.js"
 
 import adminRoutes from "./routes/admin.routes.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -15,6 +14,7 @@ import meetRoutes from "./routes/meet.routes.js"
 
 config();
 dbConnect();
+import "./services/reminderJob.js"
 
 
 const app = express();

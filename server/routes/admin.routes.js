@@ -10,7 +10,10 @@ import {
   getAllTenants,
   getOnlineUsers,
   updateProfile,
-  getProfile
+  getProfile,
+  getAllTutors,
+  getAllStudents,
+  getAllBatches
 } from "../controllers/admin.controller.js";
 
 
@@ -85,6 +88,30 @@ router.get(
 );
 
 //get online user
-router.get("/online-users", authMiddleware, authorizeRoles("superadmin"), getOnlineUsers)
+router.get("/online-users", authMiddleware, authorizeRoles("superadmin"), getOnlineUsers);
+
+// Get all tutors
+router.get(
+  "/tutors",
+  authMiddleware,
+  authorizeRoles("superadmin"),
+  getAllTutors
+);
+
+// Get all students
+router.get(
+  "/students",
+  authMiddleware,
+  authorizeRoles("superadmin"),
+  getAllStudents
+);
+
+// Get all batches
+router.get(
+  "/batches",
+  authMiddleware,
+  authorizeRoles("superadmin"),
+  getAllBatches
+);
 
 export default router;

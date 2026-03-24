@@ -39,4 +39,20 @@ export const updateProfileApi = (formData)=>{
 export const getProfileApi = () => {
   return API.get("/admin/profile");
 };
+
+// Get all tutors
+export const getAllTutorsApi = (page = 1, limit = 10) => {
+  return API.get(`/admin/tutors?page=${page}&limit=${limit}`);
+};
+
+// Get all students
+export const getAllStudentsApi = (page = 1, limit = 10) => {
+  return API.get(`/admin/students?page=${page}&limit=${limit}`);
+};
+
+// Get all batches
+export const getAllBatchesApi = (page = 1, limit = 10) => {
+  return API.get(`/admin/batches?page=${page}&limit=${limit}`);
+};
+
 export default API;
