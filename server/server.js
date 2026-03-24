@@ -2,7 +2,11 @@ import express from "express";
 import {config} from "dotenv";
 import { dbConnect } from "./configs/dbConnect.js";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 import adminRoutes from "./routes/admin.routes.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -22,7 +26,7 @@ app.use(cors({
     origin : "http://localhost:5173"
 
 }))
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 

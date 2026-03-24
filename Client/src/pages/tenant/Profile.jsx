@@ -77,14 +77,21 @@ const Profile = () => {
 
     
 
-    const res = await mutateAsync(formData);
-    if(res){
-      toast.success("Profile updated successfully!");
+    try {
+      const res = await mutateAsync(formData);
+      
+      if (res?.data?.user) {
+        toast.success("Profile updated successfully!");
+        sessionStorage.setItem("user", JSON.stringify(res.data.user));
+        setUser(res.data.user);
+        navigate("/tenant/dashboard");
+      } else {
+        toast.error("Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast.error(error?.response?.data?.message || "Failed to update profile");
     }
-
-    sessionStorage.setItem("user", JSON.stringify(res?.data?.user));
-    setUser(res?.data?.user);
-    navigate("/tenant/dashboard");
   };
 
   return (

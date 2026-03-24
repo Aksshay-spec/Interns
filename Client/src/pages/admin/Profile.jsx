@@ -39,25 +39,35 @@ const Profile = () => {
   }, [profileData, user, reset]);
 
   const onSubmit = async (values) => {
-    const formData = new FormData();
+    try {
+      const formData = new FormData();
 
-    formData.append("name", values.name);
-    formData.append("email", values.email);
+      formData.append("name", values.name);
+      formData.append("email", values.email);
 
-    if (values.photo?.[0]) {
-      formData.append("profileImage", values.photo[0]);
+      if (values.photo?.[0]) {
+        console.log("File selected:", values.photo[0].name);
+        formData.append("profileImage", values.photo[0]);
+      } else {
+        console.log("No file selected");
+      }
+
+      console.log("Submitting profile update...");
+      const res = await mutateAsync(formData);
+      console.log("Response:", res?.data);
+      
+      if (res?.data?.user) {
+        toast.success("Profile updated successfully!");
+        sessionStorage.setItem("user", JSON.stringify(res.data.user));
+        setUser(res.data.user);
+        navigate("/admin/dashboard");
+      } else {
+        toast.error("Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Profile update error:", error?.response?.data || error.message);
+      toast.error(error?.response?.data?.message || "Failed to update profile");
     }
-
-    
-
-    const res = await mutateAsync(formData);
-    if(res){
-      toast.success("Profile updated successfully!");
-    }
-
-    sessionStorage.setItem("user", JSON.stringify(res?.data?.user));
-    setUser(res?.data?.user);
-    navigate("/admin/dashboard");
   };
 
   return (
