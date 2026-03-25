@@ -54,8 +54,9 @@ export default function AddTutor() {
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isSubmitted },
+    formState: { errors },
   } = useForm();
+  register("subject", { required: "Subject is required" });
 
   const handleDelete = (id) => {
     setDeleteTutorId(id);
@@ -126,7 +127,9 @@ export default function AddTutor() {
   };
 
   const subjects = subjectsData?.subjects || [];
-  const activeSubjects = subjects.filter((subject) => subject.status === "active");
+  const activeSubjects = subjects.filter(
+    (subject) => subject.status === "active",
+  );
 
   const handleToggleStatus = async (tutor) => {
     const nextStatus = tutor.status === "inactive" ? "active" : "inactive";
@@ -208,7 +211,13 @@ export default function AddTutor() {
             {/* Subjects */}
             <div>
               <Label>Subjects</Label>
-              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+              <Select
+                value={selectedSubject}
+                onValueChange={(value) => {
+                  setSelectedSubject(value);
+                  setValue("subject", value, { shouldValidate: true });
+                }}
+              >
                 <SelectTrigger className="mt-1 w-full">
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
@@ -226,9 +235,9 @@ export default function AddTutor() {
                   )}
                 </SelectContent>
               </Select>
-              {isSubmitted && !selectedSubject && (
+              {errors.subject && (
                 <p className="text-xs text-red-500 mt-1">
-                  Subject is required
+                  {errors.subject.message}
                 </p>
               )}
             </div>
