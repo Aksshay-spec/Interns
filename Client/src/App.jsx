@@ -30,6 +30,7 @@ import TutorLayout from "@/layouts/TutorLayout";
 import TutorDashboard from "@/pages/tutor/TutorDashboard";
 import TutorProfile from "@/pages/tutor/Profile";
 import TutorMyClasses from "@/pages/tutor/MyClasses";
+import TutorBatches from "@/pages/tutor/Batches";
 
 //student pages
 import StudentLayout from "@/layouts/StudentLayout";
@@ -89,6 +90,7 @@ function App() {
           <Route element={<TutorLayout />}>
             <Route path="/tutor/dashboard" element={<TutorDashboard />} />
             <Route path="/tutor/my-classes" element={<TutorMyClasses />} />
+            <Route path="/tutor/batches" element={<TutorBatches />} />
             <Route path="/tutor/profile" element={<TutorProfile />} />
           </Route>
         </Route>

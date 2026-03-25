@@ -111,6 +111,23 @@ export default function Tutors() {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setFilters({
+                  name: "",
+                  email: "",
+                  tenant: "",
+                  subject: "",
+                  status: "",
+                })
+              }
+            >
+              Reset Filters
+            </Button>
+          </div>
           {filteredTutors.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
               {tutors.length === 0 ? "No Tutors" : "No tutors match the filters"}

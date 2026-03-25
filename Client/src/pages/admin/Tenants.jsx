@@ -187,6 +187,22 @@ export default function Tenants() {
             </Select>
           </div>
 
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setFilters({
+                  tuitionName: "",
+                  email: "",
+                  plan: "",
+                  status: "",
+                })
+              }
+            >
+              Reset Filters
+            </Button>
+          </div>
+
           {tenants.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
               No Tenants

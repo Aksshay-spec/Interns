@@ -103,6 +103,22 @@ export default function Batches() {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setFilters({
+                  batchName: "",
+                  tenant: "",
+                  subject: "",
+                  status: "",
+                })
+              }
+            >
+              Reset Filters
+            </Button>
+          </div>
           {filteredBatches.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
               {batches.length === 0 ? "No Batches" : "No batches match the filters"}

@@ -98,6 +98,23 @@ export default function Students() {
             />
           </div>
 
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setFilters({
+                  name: "",
+                  email: "",
+                  batch: "",
+                  status: "",
+                  tenant: "",
+                })
+              }
+            >
+              Reset Filters
+            </Button>
+          </div>
+
           {(() => {
             // Filter students based on filters
             const filteredStudents = students.filter(student => {

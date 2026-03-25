@@ -9,6 +9,12 @@ import {
 } from "@/components/ui/table";
 import { useGetMyClasses } from "@/hooks/tutor/useGetMyClasses";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function MyClasses() {
   const { data: classesData, isLoading } = useGetMyClasses();
@@ -50,15 +56,32 @@ export default function MyClasses() {
                         <TableCell>{cls.subjectId?.name || "-"}</TableCell>
                         <TableCell>{cls.batchId?.name || "-"}</TableCell>
                         <TableCell>
-                          <div className="text-sm space-y-1">
-                            {cls.batchId?.studentIds?.length > 0
-                              ? cls.batchId.studentIds.map((s) => (
-                                  <div key={s._id}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                {cls.batchId?.studentIds?.length > 0
+                                  ? `${cls.batchId.studentIds.length} Students`
+                                  : "No students"}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-56">
+                              {cls.batchId?.studentIds?.length > 0 ? (
+                                cls.batchId.studentIds.map((s) => (
+                                  <DropdownMenuItem
+                                    key={s._id}
+                                    disabled
+                                    className="text-sm"
+                                  >
                                     {s.userId?.name || "Unknown"}
-                                  </div>
+                                  </DropdownMenuItem>
                                 ))
-                              : "No students"}
-                          </div>
+                              ) : (
+                                <DropdownMenuItem disabled className="text-sm">
+                                  No students
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                         <TableCell>
                           <div className="text-xs">
