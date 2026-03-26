@@ -48,6 +48,14 @@ export default function ClassForm({
     return batch.subjectId?._id === selectedSubjectId;
   });
 
+  const handleVideoProviderChange = (provider) => {
+    setSelectedVideoProvider(provider);
+    // Clear videoLink if switching away from gmeet
+    if (provider !== "gmeet") {
+      setVideoLink("");
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
@@ -153,7 +161,7 @@ export default function ClassForm({
       {/* Video Provider */}
       <div>
         <Label>Video Provider</Label>
-        <Select value={selectedVideoProvider} onValueChange={setSelectedVideoProvider}>
+        <Select value={selectedVideoProvider} onValueChange={handleVideoProviderChange}>
           <SelectTrigger className="mt-1 w-full">
             <SelectValue placeholder="Select provider" />
           </SelectTrigger>
@@ -174,7 +182,7 @@ export default function ClassForm({
       )}
 
       {/* Link - Display generated link */}
-      {videoLink && (
+      {selectedVideoProvider === "gmeet" && videoLink && (
         <div>
           <Label>Link</Label>
           <Input
