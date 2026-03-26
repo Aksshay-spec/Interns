@@ -173,6 +173,19 @@ export default function ClassForm({
         </Button>
       )}
 
+      {/* Link - Display generated link */}
+      {videoLink && (
+        <div>
+          <Label>Link</Label>
+          <Input
+            type="text"
+            readOnly
+            value={videoLink}
+            className="mt-1 bg-gray-100 cursor-not-allowed"
+          />
+        </div>
+      )}
+
       {/* Video Link */}
       {selectedVideoProvider !== "gmeet" && (<>
         <Label className='mb-2'>Video Link</Label>
