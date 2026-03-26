@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetMyClasses } from "@/hooks/tutor/useGetMyClasses";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
 import { formatDateWithDay } from "@/utils/classUtils";
 
 const TutorDashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: classesData, isLoading } = useGetMyClasses();
   const classes = classesData?.classes || [];
@@ -146,7 +148,11 @@ const TutorDashboard = () => {
 
                   <TableBody>
                     {upcomingClasses.map((cls) => (
-                      <TableRow key={cls._id}>
+                      <TableRow
+                      key={cls._id}
+                      className="cursor-pointer hover:bg-slate-100"
+                      onClick={() => navigate("/tutor/my-classes")}
+                    >
                         <TableCell className="font-medium">
                           {cls.topic || "Class Session"}
                         </TableCell>
@@ -205,7 +211,11 @@ const TutorDashboard = () => {
 
                 <TableBody>
                   {classesForDate.map((cls) => (
-                    <TableRow key={cls._id}>
+                    <TableRow
+                      key={cls._id}
+                      className="cursor-pointer hover:bg-slate-100"
+                      
+                    >
                       <TableCell className="font-medium">
                         {cls.topic || "Class Session"}
                       </TableCell>

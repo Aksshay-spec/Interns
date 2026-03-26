@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -31,6 +32,7 @@ export default function MyClasses() {
   const classes = classesData?.classes || [];
 
   // Filter states
+  const navigate = useNavigate();
   const ALL_VALUE = "__all";
 
   const [filters, setFilters] = useState({
@@ -288,8 +290,8 @@ export default function MyClasses() {
                                 cls.batchId.studentIds.map((s) => (
                                   <DropdownMenuItem
                                     key={s._id}
-                                    disabled
-                                    className="text-sm"
+                                    className="text-sm cursor-pointer"
+                                    onClick={() => navigate('/tutor/students')}
                                   >
                                     {s.userId?.name || "Unknown"}
                                   </DropdownMenuItem>
