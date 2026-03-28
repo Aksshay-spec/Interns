@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -9,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useGetMyClasses } from "@/hooks/tutor/useGetMyClasses";
+import { useGetMyClasses } from "@/hooks/student/useGetMyClasses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,19 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 
-export default function MyClasses() {
+export default function StudentClasses() {
   const { data: classesData, isLoading } = useGetMyClasses();
   const classes = classesData?.classes || [];
 
-  // Filter states
-  const navigate = useNavigate();
   const ALL_VALUE = "__all";
 
   const [filters, setFilters] = useState({
@@ -294,7 +285,7 @@ export default function MyClasses() {
                       <TableHead>Topic</TableHead>
                       <TableHead>Subject</TableHead>
                       <TableHead>Batch</TableHead>
-                      <TableHead>Students</TableHead>
+                      <TableHead>Tutor</TableHead>
                       <TableHead>Schedule</TableHead>
                       <TableHead>Meeting</TableHead>
                       <TableHead>Status</TableHead>
@@ -310,42 +301,7 @@ export default function MyClasses() {
                           </TableCell>
                           <TableCell>{cls.subjectId?.name || "-"}</TableCell>
                           <TableCell>{cls.batchId?.name || "-"}</TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  {cls.batchId?.studentIds?.length > 0
-                                    ? `${cls.batchId.studentIds.length} Students`
-                                    : "No students"}
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="start"
-                                className="w-56"
-                              >
-                                {cls.batchId?.studentIds?.length > 0 ? (
-                                  cls.batchId.studentIds.map((s) => (
-                                    <DropdownMenuItem
-                                      key={s._id}
-                                      className="text-sm cursor-pointer"
-                                      onClick={() =>
-                                        navigate("/tutor/students")
-                                      }
-                                    >
-                                      {s.userId?.name || "Unknown"}
-                                    </DropdownMenuItem>
-                                  ))
-                                ) : (
-                                  <DropdownMenuItem
-                                    disabled
-                                    className="text-sm"
-                                  >
-                                    No students
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
+                          <TableCell>{cls.teacherId?.userId?.name || "-"}</TableCell>
                           <TableCell>
                             <div className="text-xs">
                               <div>{cls.date || "-"}</div>
@@ -396,10 +352,10 @@ export default function MyClasses() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-sm">
+                        <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
                           {classes.length === 0
-                            ? "No classes assigned"
-                            : "No classes match the current filters"}
+                            ? "No classes found"
+                            : "No classes match your filters"}
                         </TableCell>
                       </TableRow>
                     )}

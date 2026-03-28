@@ -21,11 +21,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useGetMyClasses } from "@/hooks/tutor/useGetMyClasses";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-import { BookOpen, CalendarDays, CalendarX2, Clock3, Video } from "lucide-react";
+  BookOpen,
+  CalendarDays,
+  CalendarX2,
+  Clock3,
+  Video,
+} from "lucide-react";
 
 export default function Students() {
   const { data: batchesData, isLoading } = useGetMyBatches();
@@ -46,11 +49,11 @@ export default function Students() {
   const normalizeDate = (date) =>
     new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    const getClassDate = (dateStr) => {
-      if (!dateStr) return null;
-      const parsed = new Date(`${dateStr}T00:00:00`);
-      return Number.isNaN(parsed.getTime()) ? null : normalizeDate(parsed);
-    };
+  const getClassDate = (dateStr) => {
+    if (!dateStr) return null;
+    const parsed = new Date(`${dateStr}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : normalizeDate(parsed);
+  };
 
   const formatClassTime = (cls) => {
     if (!cls.startTime) return "-";
@@ -92,7 +95,7 @@ export default function Students() {
     }
 
     const studentClasses = classes.filter((cls) =>
-      cls.batchId?.studentIds?.some((s) => s?._id === selectedStudent._id)
+      cls.batchId?.studentIds?.some((s) => s?._id === selectedStudent._id),
     );
 
     const todayClasses = [];
@@ -101,7 +104,10 @@ export default function Students() {
 
     studentClasses.forEach((cls) => {
       const classDate = getClassDate(cls.date);
-      if (!classDate) { previousClasses.push(cls); return; }
+      if (!classDate) {
+        previousClasses.push(cls);
+        return;
+      }
       if (classDate.getTime() === today.getTime()) todayClasses.push(cls);
       else if (classDate > today) upcomingClasses.push(cls);
       else previousClasses.push(cls);
@@ -144,7 +150,9 @@ export default function Students() {
     }
   });
 
-  const uniqueBatches = [...new Set(batches.map((b) => b.name).filter(Boolean))];
+  const uniqueBatches = [
+    ...new Set(batches.map((b) => b.name).filter(Boolean)),
+  ];
 
   const filteredStudents = allStudents.filter((student) => {
     const matchesName =
@@ -214,7 +222,7 @@ export default function Students() {
               </div>
 
               <div className="mt-3 flex justify-end">
-                {cls.videoLink ? (
+                {cls.videoLink && cls.status !== "completed" ? (
                   <Button
                     size="sm"
                     onClick={() => window.open(cls.videoLink, "_blank")}
@@ -224,7 +232,11 @@ export default function Students() {
                     Join Class
                   </Button>
                 ) : (
-                  <span className="text-xs text-slate-400">Meeting link not available</span>
+                  <span className="text-xs text-slate-400">
+                    {cls.status === "completed"
+                      ? "Class completed"
+                      : "Meeting link not available"}
+                  </span>
                 )}
               </div>
             </div>
@@ -237,13 +249,25 @@ export default function Students() {
   if (isLoading || classesLoading) return <Loader />;
 
   const tabs = [
-    { key: "today", label: "Today", count: studentClassGroups.todayClasses.length },
-    { key: "upcoming", label: "Upcoming", count: studentClassGroups.upcomingClasses.length },
-    { key: "completed", label: "Completed", count: studentClassGroups.previousClasses.length },
+    {
+      key: "today",
+      label: "Today",
+      count: studentClassGroups.todayClasses.length,
+    },
+    {
+      key: "upcoming",
+      label: "Upcoming",
+      count: studentClassGroups.upcomingClasses.length,
+    },
+    {
+      key: "completed",
+      label: "Completed",
+      count: studentClassGroups.previousClasses.length,
+    },
   ];
   const activeTabIndex = Math.max(
     0,
-    tabs.findIndex((tab) => tab.key === activeTab)
+    tabs.findIndex((tab) => tab.key === activeTab),
   );
 
   return (
@@ -276,7 +300,10 @@ export default function Students() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="student-name-filter" className="text-sm font-medium">
+                    <Label
+                      htmlFor="student-name-filter"
+                      className="text-sm font-medium"
+                    >
                       Student Name
                     </Label>
                     <Input
@@ -284,21 +311,27 @@ export default function Students() {
                       placeholder="Search by student name..."
                       value={filters.studentName}
                       onChange={(e) =>
-                        setFilters((prev) => ({ ...prev, studentName: e.target.value }))
+                        setFilters((prev) => ({
+                          ...prev,
+                          studentName: e.target.value,
+                        }))
                       }
                       className="w-full"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="batch-filter" className="text-sm font-medium">
+                    <Label
+                      htmlFor="batch-filter"
+                      className="text-sm font-medium"
+                    >
                       Batch
                     </Label>
                     <Select
                       value={filters.batch}
                       onValueChange={(value) =>
                         setFilters((prev) => ({ ...prev, batch: value }))
-                      } 
+                      }
                     >
                       <SelectTrigger id="batch-filter" className="w-full">
                         <SelectValue placeholder="All batches" />
@@ -372,7 +405,9 @@ export default function Students() {
                 <p className="text-lg font-semibold capitalize text-slate-900">
                   {selectedStudent?.userId?.name || "Student"}
                 </p>
-                <p className="text-sm text-slate-500">{selectedStudent?.userId?.email || "-"}</p>
+                <p className="text-sm text-slate-500">
+                  {selectedStudent?.userId?.email || "-"}
+                </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
                     {selectedStudent?.batchName || "Batch unavailable"}
@@ -386,13 +421,30 @@ export default function Students() {
 
             <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
               {[
-                ["Today", studentClassGroups.todayClasses.length, "text-sky-700 bg-sky-50 border-sky-100"],
-                ["Upcoming", studentClassGroups.upcomingClasses.length, "text-amber-700 bg-amber-50 border-amber-100"],
-                ["Completed", studentClassGroups.previousClasses.length, "text-emerald-700 bg-emerald-50 border-emerald-100"],
+                [
+                  "Today",
+                  studentClassGroups.todayClasses.length,
+                  "text-sky-700 bg-sky-50 border-sky-100",
+                ],
+                [
+                  "Upcoming",
+                  studentClassGroups.upcomingClasses.length,
+                  "text-amber-700 bg-amber-50 border-amber-100",
+                ],
+                [
+                  "Completed",
+                  studentClassGroups.previousClasses.length,
+                  "text-emerald-700 bg-emerald-50 border-emerald-100",
+                ],
               ].map(([label, count, tone]) => (
-                <div key={label} className={`rounded-xl border px-4 py-3 ${tone}`}>
+                <div
+                  key={label}
+                  className={`rounded-xl border px-4 py-3 ${tone}`}
+                >
                   <p className="text-2xl font-semibold leading-none">{count}</p>
-                  <p className="mt-1 text-xs font-medium uppercase tracking-wide">{label}</p>
+                  <p className="mt-1 text-xs font-medium uppercase tracking-wide">
+                    {label}
+                  </p>
                 </div>
               ))}
             </div>
@@ -425,11 +477,20 @@ export default function Students() {
 
           <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-5 py-4">
             {activeTab === "today" &&
-              renderClassList(studentClassGroups.todayClasses, "No classes scheduled for today")}
+              renderClassList(
+                studentClassGroups.todayClasses,
+                "No classes scheduled for today",
+              )}
             {activeTab === "upcoming" &&
-              renderClassList(studentClassGroups.upcomingClasses, "No upcoming classes")}
+              renderClassList(
+                studentClassGroups.upcomingClasses,
+                "No upcoming classes",
+              )}
             {activeTab === "completed" &&
-              renderClassList(studentClassGroups.previousClasses, "No completed classes yet")}
+              renderClassList(
+                studentClassGroups.previousClasses,
+                "No completed classes yet",
+              )}
           </div>
         </DialogContent>
       </Dialog>

@@ -43,9 +43,7 @@ const TutorDashboard = () => {
     : null;
 
   // Classes for selected date
-  const classesForDate = classes.filter(
-    (cls) => cls.date === formattedDate,
-  );
+  const classesForDate = classes.filter((cls) => cls.date === formattedDate);
 
   // Get all class dates
   const classDates = classes.map((cls) =>
@@ -59,10 +57,7 @@ const TutorDashboard = () => {
       const classDate = normalizeDate(new Date(cls.date));
       return classDate >= today;
     })
-    .sort(
-      (a, b) =>
-        new Date(a.date) - new Date(b.date),
-    );
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   // Selected day check
   const selectedDay = selectedDate ? normalizeDate(selectedDate) : null;
@@ -76,9 +71,7 @@ const TutorDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold capitalize">
-        Welcome, {user?.name}
-      </h1>
+      <h1 className="text-3xl font-bold capitalize">Welcome, {user?.name}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Calendar */}
@@ -109,8 +102,7 @@ const TutorDashboard = () => {
                   ),
 
                 selectedPast: (date) =>
-                  isSelectedDate(date) &&
-                  normalizeDate(date) < today,
+                  isSelectedDate(date) && normalizeDate(date) < today,
               }}
               modifiersClassNames={{
                 todayDefault:
@@ -140,25 +132,23 @@ const TutorDashboard = () => {
                     <TableRow>
                       <TableHead>Topic</TableHead>
                       <TableHead>Subject</TableHead>
-                    
+
                       <TableHead>Schedule</TableHead>
-                     
                     </TableRow>
                   </TableHeader>
 
                   <TableBody>
                     {upcomingClasses.map((cls) => (
                       <TableRow
-                      key={cls._id}
-                      className="cursor-pointer hover:bg-slate-100"
-                      onClick={() => navigate("/tutor/my-classes")}
-                    >
+                        key={cls._id}
+                        className="cursor-pointer hover:bg-slate-100"
+                        onClick={() => navigate("/tutor/my-classes")}
+                      >
                         <TableCell className="font-medium">
                           {cls.topic || "Class Session"}
                         </TableCell>
                         <TableCell>{cls.subjectId?.name || "-"}</TableCell>
-                       
-                       
+
                         <TableCell>
                           <div className="text-xs">
                             <div>{cls.date || "-"}</div>
@@ -169,8 +159,6 @@ const TutorDashboard = () => {
                             </div>
                           </div>
                         </TableCell>
-                       
-                       
                       </TableRow>
                     ))}
                   </TableBody>
@@ -214,7 +202,6 @@ const TutorDashboard = () => {
                     <TableRow
                       key={cls._id}
                       className="cursor-pointer hover:bg-slate-100"
-                      
                     >
                       <TableCell className="font-medium">
                         {cls.topic || "Class Session"}
@@ -235,31 +222,31 @@ const TutorDashboard = () => {
                             cls.status === "completed"
                               ? "bg-blue-100 text-blue-800"
                               : cls.status === "cancelled"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-green-100 text-green-800"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-800"
                           }`}
                         >
                           {cls.status === "completed"
                             ? "Completed"
                             : cls.status === "cancelled"
-                            ? "Cancelled"
-                            : "Scheduled"}
+                              ? "Cancelled"
+                              : "Scheduled"}
                         </span>
                       </TableCell>
                       <TableCell>
-                        {cls.videoLink ? (
+                        {cls.videoLink && cls.status !== "completed" ? (
                           <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() =>
-                              window.open(cls.videoLink, "_blank")
-                            }
+                            onClick={() => window.open(cls.videoLink, "_blank")}
                           >
                             Join
                           </Button>
                         ) : (
                           <span className="text-xs text-muted-foreground">
-                            -
+                            {cls.status === "completed"
+                              ? "Class completed"
+                              : "-"}
                           </span>
                         )}
                       </TableCell>

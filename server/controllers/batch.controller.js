@@ -163,3 +163,38 @@ export const getBatchesByTutor = async (req, res) => {
     return res.status(500).json({ message: "Server Error" });
   }
 };
+
+export const getBatchesByStudent = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const tenantId = req.user.tenantId;
+
+    const studentProfile = await Student.findOne({ userId, tenantId });
+    if (!studentProfile) {
+      return res.status(404).json({ message: "Student profile not found" });
+    }
+
+    const batches = await Batch.find({
+      tenantId,
+      studentIds: studentProfile._id,
+    })
+      .populate("subjectId", "name status")
+      .populate({
+        path: "teacherId",
+        populate: { path: "userId", select: "name email" },
+      })
+      .populate({
+        path: "studentIds",
+        populate: { path: "userId", select: "name email" },
+      })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      message: "Batches fetched successfully",
+      batches,
+    });
+  } catch (error) {
+    console.error("Get Student Batches Error:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};

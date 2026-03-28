@@ -37,6 +37,8 @@ import TutorStudents from "@/pages/tutor/Students";
 import StudentLayout from "@/layouts/StudentLayout";
 import StudentDashboard from "@/pages/student/StudentDashboard";
 import StudentProfile from "@/pages/student/Profile";
+import StudentClasses from "@/pages/student/StudentClasses";
+import StudentBatches from "@/pages/student/StudentBatches";
 
 import Register from "@/pages/auth/Register";
 import Login from "@/pages/auth/Login";
@@ -104,6 +106,8 @@ function App() {
         >
           <Route element={<StudentLayout />}>
             <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/student/classes" element={<StudentClasses />} />
+            <Route path="/student/batches" element={<StudentBatches />} />
             <Route path="/student/profile" element={<StudentProfile />} />
           </Route>
         </Route>

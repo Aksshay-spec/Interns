@@ -370,7 +370,7 @@ export default function ManageClasses() {
                               <DropdownMenuItem onClick={() => handleEdit(cls)}>
                                 Edit
                               </DropdownMenuItem>
-                              {cls.videoLink && (
+                              {cls.videoLink && cls.status !== "completed" && (
                                 <DropdownMenuItem
                                   onClick={() =>
                                     window.open(cls.videoLink, "_blank")
