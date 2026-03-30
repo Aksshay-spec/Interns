@@ -23,10 +23,13 @@ import {
 } from "@/components/ui/dialog";
 
 import { formatDateWithDay } from "@/utils/classUtils";
+import { useNavigate } from "react-router-dom";
 
 const StudentDashboard = () => {
   const { user } = useAuth();
   const { data: classesData } = useGetMyClasses();
+  const navigate = useNavigate();
+
 
   const classes = classesData?.classes || [];
 
@@ -146,7 +149,10 @@ const StudentDashboard = () => {
 
                   <TableBody>
                     {upcomingClasses.map((cls) => (
-                      <TableRow key={cls._id}>
+                      <TableRow key={cls._id}
+                      className="cursor-pointer"
+                      onClick={() => navigate("/student/classes")}
+                      >
                         <TableCell className="capitalize">
                           {cls.topic || "Class Session"}
                         </TableCell>
