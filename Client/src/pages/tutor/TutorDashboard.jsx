@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,10 +30,70 @@ const TutorDashboard = () => {
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [nowTs, setNowTs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timerId = setInterval(() => setNowTs(Date.now()), 30 * 1000);
+    return () => clearInterval(timerId);
+  }, []);
 
   // Normalize date (remove time)
   const normalizeDate = (date) =>
     new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  const normalizeStatus = (status) => String(status || "").trim().toLowerCase();
+
+  const parseClassStartDateTime = (cls) => {
+    if (!cls?.date || !cls?.startTime) return null;
+
+    const datePart = String(cls.date).split("T")[0];
+    const baseDate = new Date(`${datePart}T00:00:00`);
+    if (Number.isNaN(baseDate.getTime())) return null;
+
+    const timeMatch = String(cls.startTime)
+      .trim()
+      .match(/^(\d{1,2}):(\d{2})(?:\s*([AaPp][Mm]))?$/);
+    if (!timeMatch) return null;
+
+    let hours = Number(timeMatch[1]);
+    const minutes = Number(timeMatch[2]);
+    const meridiem = timeMatch[3]?.toUpperCase();
+
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+
+    if (meridiem) {
+      if (hours === 12) hours = 0;
+      if (meridiem === "PM") hours += 12;
+    }
+
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+
+    const startDateTime = new Date(baseDate);
+    startDateTime.setHours(hours, minutes, 0, 0);
+    return startDateTime;
+  };
+
+  const getJoinCutoffTime = (cls) => {
+    const startDateTime = parseClassStartDateTime(cls);
+    if (!startDateTime) return null;
+
+    const duration = Number(cls.duration);
+    const durationMinutes = Number.isFinite(duration) && duration > 0 ? duration : 0;
+    const graceMinutes = 15;
+    return new Date(startDateTime.getTime() + (durationMinutes + graceMinutes) * 60 * 1000);
+  };
+
+  const canShowJoinButton = (cls) => {
+    if (!cls?.videoLink) return false;
+
+    const status = normalizeStatus(cls.status);
+    if (status === "cancelled") return false;
+
+    const cutoffTime = getJoinCutoffTime(cls);
+    if (!cutoffTime) return status !== "completed";
+
+    return nowTs <= cutoffTime.getTime();
+  };
 
   const today = normalizeDate(new Date());
 
@@ -198,7 +258,13 @@ const TutorDashboard = () => {
                 </TableHeader>
 
                 <TableBody>
-                  {classesForDate.map((cls) => (
+                  {classesForDate.map((cls) => {
+                    const normalizedStatus = normalizeStatus(cls.status);
+                    const isCompleted = normalizedStatus === "completed";
+                    const isCancelled = normalizedStatus === "cancelled";
+                    const canJoin = canShowJoinButton(cls);
+
+                    return (
                     <TableRow
                       key={cls._id}
                       className="cursor-pointer hover:bg-slate-100"
@@ -219,22 +285,22 @@ const TutorDashboard = () => {
                       <TableCell>
                         <span
                           className={`px-3 py-1 text-xs rounded-full font-medium ${
-                            cls.status === "completed"
+                            isCompleted
                               ? "bg-blue-100 text-blue-800"
-                              : cls.status === "cancelled"
+                              : isCancelled
                                 ? "bg-red-100 text-red-700"
                                 : "bg-green-100 text-green-800"
                           }`}
                         >
-                          {cls.status === "completed"
+                          {isCompleted
                             ? "Completed"
-                            : cls.status === "cancelled"
+                            : isCancelled
                               ? "Cancelled"
                               : "Scheduled"}
                         </span>
                       </TableCell>
                       <TableCell>
-                        {cls.videoLink && cls.status !== "completed" ? (
+                        {canJoin ? (
                           <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700 text-white"
@@ -244,14 +310,15 @@ const TutorDashboard = () => {
                           </Button>
                         ) : (
                           <span className="text-xs text-muted-foreground">
-                            {cls.status === "completed"
+                            {isCompleted
                               ? "Class completed"
                               : "-"}
                           </span>
                         )}
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

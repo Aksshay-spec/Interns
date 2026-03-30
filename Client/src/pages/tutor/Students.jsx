@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -45,6 +45,12 @@ export default function Students() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("today");
+  const [nowTs, setNowTs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timerId = setInterval(() => setNowTs(Date.now()), 30 * 1000);
+    return () => clearInterval(timerId);
+  }, []);
 
   const normalizeDate = (date) =>
     new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -71,23 +77,81 @@ export default function Students() {
     });
   };
 
+  const normalizeStatus = (status) => String(status || "").trim().toLowerCase();
+
+  const parseClassStartDateTime = (cls) => {
+    if (!cls?.date || !cls?.startTime) return null;
+
+    const datePart = String(cls.date).split("T")[0];
+    const baseDate = new Date(`${datePart}T00:00:00`);
+    if (Number.isNaN(baseDate.getTime())) return null;
+
+    const timeMatch = String(cls.startTime)
+      .trim()
+      .match(/^(\d{1,2}):(\d{2})(?:\s*([AaPp][Mm]))?$/);
+    if (!timeMatch) return null;
+
+    let hours = Number(timeMatch[1]);
+    const minutes = Number(timeMatch[2]);
+    const meridiem = timeMatch[3]?.toUpperCase();
+
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+
+    if (meridiem) {
+      if (hours === 12) hours = 0;
+      if (meridiem === "PM") hours += 12;
+    }
+
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+
+    const startDateTime = new Date(baseDate);
+    startDateTime.setHours(hours, minutes, 0, 0);
+    return startDateTime;
+  };
+
+  const getJoinCutoffTime = (cls) => {
+    const startDateTime = parseClassStartDateTime(cls);
+    if (!startDateTime) return null;
+
+    const duration = Number(cls.duration);
+    const durationMinutes = Number.isFinite(duration) && duration > 0 ? duration : 0;
+    const graceMinutes = 15;
+    return new Date(startDateTime.getTime() + (durationMinutes + graceMinutes) * 60 * 1000);
+  };
+
+  const canShowJoinButton = (cls) => {
+    if (!cls?.videoLink) return false;
+
+    const status = normalizeStatus(cls.status);
+    if (status === "cancelled") return false;
+
+    const cutoffTime = getJoinCutoffTime(cls);
+    if (!cutoffTime) return status !== "completed";
+
+    return nowTs <= cutoffTime.getTime();
+  };
+
   const getStatusLabel = (status) => {
-    if (status === "completed") return "Completed";
-    if (status === "cancelled") return "Cancelled";
+    const normalizedStatus = normalizeStatus(status);
+    if (normalizedStatus === "completed") return "Completed";
+    if (normalizedStatus === "cancelled") return "Cancelled";
     return "Scheduled";
   };
 
   const getStatusTone = (status) => {
-    if (status === "completed") {
+    const normalizedStatus = normalizeStatus(status);
+    if (normalizedStatus === "completed") {
       return "text-emerald-700 bg-emerald-50 border-emerald-100";
     }
-    if (status === "cancelled") {
+    if (normalizedStatus === "cancelled") {
       return "text-rose-700 bg-rose-50 border-rose-100";
     }
     return "text-sky-700 bg-sky-50 border-sky-100";
   };
 
   const today = normalizeDate(new Date());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
 
   const studentClassGroups = (() => {
     if (!selectedStudent?._id) {
@@ -104,13 +168,13 @@ export default function Students() {
 
     studentClasses.forEach((cls) => {
       const classDate = getClassDate(cls.date);
-      if (!classDate) {
-        previousClasses.push(cls);
-        return;
-      }
+      if (!classDate) return;
+
       if (classDate.getTime() === today.getTime()) todayClasses.push(cls);
       else if (classDate > today) upcomingClasses.push(cls);
-      else previousClasses.push(cls);
+      else if (classDate.getTime() === yesterday.getTime()) {
+        previousClasses.push(cls);
+      }
     });
 
     const sortByDate = (a, b) => {
@@ -186,6 +250,9 @@ export default function Students() {
     return (
       <div className="space-y-3">
         {data.map((cls) => {
+          const normalizedStatus = normalizeStatus(cls.status);
+          const isCompleted = normalizedStatus === "completed";
+          const canJoin = canShowJoinButton(cls);
           const tone = getStatusTone(cls.status);
 
           return (
@@ -222,7 +289,7 @@ export default function Students() {
               </div>
 
               <div className="mt-3 flex justify-end">
-                {cls.videoLink && cls.status !== "completed" ? (
+                {canJoin ? (
                   <Button
                     size="sm"
                     onClick={() => window.open(cls.videoLink, "_blank")}
@@ -233,7 +300,7 @@ export default function Students() {
                   </Button>
                 ) : (
                   <span className="text-xs text-slate-400">
-                    {cls.status === "completed"
+                    {isCompleted
                       ? "Class completed"
                       : "Meeting link not available"}
                   </span>
@@ -489,7 +556,7 @@ export default function Students() {
             {activeTab === "completed" &&
               renderClassList(
                 studentClassGroups.previousClasses,
-                "No completed classes yet",
+                "No completed classes for yesterday",
               )}
           </div>
         </DialogContent>
